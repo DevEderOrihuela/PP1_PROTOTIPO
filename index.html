@@ -220,6 +220,11 @@
       background-color: #F0FDF4;
     }
 
+    .validation-step-card.rejected {
+      border-color: #FCA5A5;
+      background-color: #FEF2F2;
+    }
+
     .validation-step-card.active-turn {
       border-color: var(--inei-steel);
       box-shadow: 0 4px 14px rgba(43, 108, 176, 0.12);
@@ -370,7 +375,7 @@
                 <span class="fw-semibold small text-dark">Coord. Dirección Nacional Evaluación</span>
                 <span class="badge bg-info text-dark">AU · Área Usuaria</span>
               </div>
-              <div class="text-muted" style="font-size: 0.72rem;">Registra requerimientos, subsana observaciones y otorga Visto Bueno</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Registra requerimientos, subsana observaciones y otorga o rechaza Visto Bueno</div>
             </button>
 
             <!-- Rol 2: Especialista de Control de Calidad (EC) -->
@@ -388,7 +393,7 @@
                 <span class="fw-semibold small text-dark">Ing. Luis Alberto Higuchi</span>
                 <span class="badge bg-success">RP · Responsable Proyecto</span>
               </div>
-              <div class="text-muted" style="font-size: 0.72rem;">Consulta, previsualiza/descarga archivos y reportes, y otorga Conformidad</div>
+              <div class="text-muted" style="font-size: 0.72rem;">Consulta, previsualiza/descarga archivos y reportes, y otorga o rechaza Conformidad</div>
             </button>
           </div>
         </div>
@@ -759,11 +764,64 @@
           </div>
 
           <!-- Cadena Secuencial de 3 Actos Diferenciados -->
-          <div class="row g-4" id="validationChainContainer"></div>
+          <div class="row g-4 mb-4" id="validationChainContainer"></div>
+
+          <!-- Historial Cronológico de Validaciones y Rechazos -->
+          <div class="card-panel p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+              <h3 class="h6 fw-bold mb-0" style="color: var(--inei-navy-dark);">
+                <i class="bi bi-journal-check me-1 text-primary"></i>Historial de Decisiones de Validación
+              </h3>
+              <span class="badge bg-light text-dark border font-mono small" id="valHistoryCount">0 evento(s)</span>
+            </div>
+            <div id="valHistoryContainer"></div>
+          </div>
         </div>
 
       </div>
     </main>
+
+    <!-- ========================================================================
+         MODAL: REGISTRAR RECHAZO DE VISTO BUENO O CONFORMIDAD
+         ======================================================================== -->
+    <div class="modal fade" id="modalRechazoValidacion" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title fw-bold h6 mb-0" id="modalRechazoTitle">
+              <i class="bi bi-x-octagon-fill me-2"></i>Rechazar Validación
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+
+          <form id="formRechazoValidacion" novalidate>
+            <div class="modal-body p-4">
+              <input type="hidden" id="rechazoTipoInput" />
+              <input type="hidden" id="rechazoCodigoReqInput" />
+              <input type="hidden" id="rechazoEventoPrevioInput" />
+
+              <div id="rechazoErrorBox" class="alert alert-danger d-none small py-2"></div>
+
+              <div class="bg-light border rounded-3 p-3 mb-3 small" id="rechazoResumenBox"></div>
+
+              <div class="mb-0">
+                <label for="rechazoMotivoInput" class="form-label small fw-semibold">
+                  Motivo del Rechazo <span class="text-danger">*</span>
+                </label>
+                <textarea id="rechazoMotivoInput" class="form-control form-control-sm" rows="3" placeholder="Detalle las razones por las cuales se rechaza el visto bueno o la conformidad..." required></textarea>
+              </div>
+            </div>
+
+            <div class="modal-footer bg-light">
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-sm btn-danger px-3 fw-semibold">
+                <i class="bi bi-x-circle me-1"></i>Confirmar Rechazo
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- ========================================================================
          MODAL: REGISTRAR NUEVO REQUERIMIENTO
@@ -887,9 +945,9 @@
                   <tr><td>Subsanar observaciones</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-muted">—</td></tr>
                   <tr><td>Previsualizar y descargar archivos</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-success fw-bold">Sí</td></tr>
                   <tr><td>Descargar reportes</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-success fw-bold">Sí</td></tr>
-                  <tr class="table-success"><td>Dar visto bueno al requerimiento implementado</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-muted">—</td><td class="text-center text-muted">—</td></tr>
+                  <tr class="table-success"><td>Dar o rechazar visto bueno al requerimiento implementado</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-muted">—</td><td class="text-center text-muted">—</td></tr>
                   <tr class="table-primary"><td>Derivar visto bueno del requerimiento</td><td class="text-center text-muted">—</td><td class="text-center text-success fw-bold">Sí</td><td class="text-center text-muted">—</td></tr>
-                  <tr class="table-warning"><td>Dar conformidad al requerimiento</td><td class="text-center text-muted">—</td><td class="text-center text-muted">—</td><td class="text-center text-success fw-bold">Sí</td></tr>
+                  <tr class="table-warning"><td>Dar o rechazar conformidad al requerimiento</td><td class="text-center text-muted">—</td><td class="text-center text-muted">—</td><td class="text-center text-success fw-bold">Sí</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1072,7 +1130,7 @@
         nombre: "Coord. Dirección Nacional de Evaluación",
         perfil: "AU",
         perfilNombre: "Área Usuaria (AU)",
-        descripcionRol: "Habilitado para registrar requerimientos, consultar información, subsanar observaciones, gestionar archivos y dar Visto Bueno."
+        descripcionRol: "Habilitado para registrar requerimientos, consultar información, subsanar observaciones, gestionar archivos y dar o rechazar Visto Bueno."
       },
       {
         id_usuario: "USR-EC-01",
@@ -1090,7 +1148,7 @@
         nombre: "Ing. Luis Alberto Higuchi Maruyama",
         perfil: "RP",
         perfilNombre: "Responsable del Proyecto (RP)",
-        descripcionRol: "Habilitado para consultar requerimientos, previsualizar/descargar archivos y reportes, y otorgar la Conformidad final."
+        descripcionRol: "Habilitado para consultar requerimientos, previsualizar/descargar archivos y reportes, y otorgar o rechazar la Conformidad final."
       }
     ];
 
@@ -1492,10 +1550,30 @@
 
     function getValidationStateForReq(codigoReq) {
       const evs = state.eventos_validacion.filter((e) => e.codigo_req === codigoReq);
-      const vb = evs.find((e) => e.tipo === "Visto bueno") || null;
-      const derivacion = evs.find((e) => e.tipo === "Derivación del visto bueno") || null;
-      const conformidad = evs.find((e) => e.tipo === "Conformidad") || null;
-      return { vb, derivacion, conformidad };
+
+      const step1Events = evs.filter(
+        (e) => e.tipo === "Visto bueno" || e.tipo === "Visto bueno rechazado"
+      );
+      const lastStep1 = step1Events[step1Events.length - 1] || null;
+      const vb = lastStep1 && lastStep1.tipo === "Visto bueno" ? lastStep1 : null;
+      const vbRechazado = lastStep1 && lastStep1.tipo === "Visto bueno rechazado" ? lastStep1 : null;
+
+      const derivacion = vb
+        ? evs.find((e) => e.tipo === "Derivación del visto bueno" && e.id_evento_previo === vb.id_evento) || null
+        : null;
+
+      const step3Events = derivacion
+        ? evs.filter(
+            (e) =>
+              (e.tipo === "Conformidad" || e.tipo === "Conformidad rechazada") &&
+              e.id_evento_previo === derivacion.id_evento
+          )
+        : [];
+      const lastStep3 = step3Events[step3Events.length - 1] || null;
+      const conformidad = lastStep3 && lastStep3.tipo === "Conformidad" ? lastStep3 : null;
+      const conformidadRechazada = lastStep3 && lastStep3.tipo === "Conformidad rechazada" ? lastStep3 : null;
+
+      return { vb, vbRechazado, derivacion, conformidad, conformidadRechazada, historial: evs };
     }
 
     /* ==========================================================================
@@ -1563,7 +1641,7 @@
       ).length;
       const pendientesConformidad = state.requerimientos.filter((r) => {
         const v = getValidationStateForReq(r.codigo);
-        return v.derivacion && !v.conformidad;
+        return v.derivacion && !v.conformidad && !v.conformidadRechazada;
       }).length;
       const conConformidad = state.requerimientos.filter(
         (r) => getValidationStateForReq(r.codigo).conformidad
@@ -1634,10 +1712,14 @@
           let valBadge = `<span class="badge bg-light text-muted border">Sin visto bueno</span>`;
           if (val.conformidad) {
             valBadge = `<span class="badge bg-success"><i class="bi bi-check-all me-1"></i>Conforme (RP)</span>`;
+          } else if (val.conformidadRechazada) {
+            valBadge = `<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Conformidad Rechazada</span>`;
           } else if (val.derivacion) {
             valBadge = `<span class="badge bg-primary"><i class="bi bi-send-check me-1"></i>VB Derivado (EC)</span>`;
           } else if (val.vb) {
             valBadge = `<span class="badge bg-info text-dark"><i class="bi bi-check2 me-1"></i>Visto Bueno (AU)</span>`;
+          } else if (val.vbRechazado) {
+            valBadge = `<span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>VB Rechazado (AU)</span>`;
           }
 
           const obsCount = state.observaciones.filter((o) => o.codigo_req === req.codigo).length;
@@ -1773,9 +1855,9 @@
           `"${r.estado_actual}"`,
           r.fecha_registro,
           obsCount,
-          val.vb ? `"Sí (${val.vb.fecha})"` : "Pendiente",
+          val.vb ? `"Sí (${val.vb.fecha})"` : val.vbRechazado ? `"Rechazado (${val.vbRechazado.fecha})"` : "Pendiente",
           val.derivacion ? `"Sí (${val.derivacion.fecha})"` : "Pendiente",
-          val.conformidad ? `"Sí (${val.conformidad.fecha})"` : "Pendiente"
+          val.conformidad ? `"Sí (${val.conformidad.fecha})"` : val.conformidadRechazada ? `"Rechazada (${val.conformidadRechazada.fecha})"` : "Pendiente"
         ].join(",");
       });
 
@@ -2257,34 +2339,56 @@
         </div>
       `;
 
-      const { vb, derivacion, conformidad } = getValidationStateForReq(req.codigo);
+      const { vb, vbRechazado, derivacion, conformidad, conformidadRechazada, historial } = getValidationStateForReq(req.codigo);
       const container = document.getElementById("validationChainContainer");
 
-      // Paso 1: Visto Bueno (AU)
+      // Paso 1: Visto Bueno (AU) — Aprobar o Rechazar
+      const step1CardClass = vb ? "completed" : vbRechazado ? "rejected" : "active-turn";
+      const step1CircleClass = vb
+        ? "bg-success text-white"
+        : vbRechazado
+        ? "bg-danger text-white"
+        : "bg-primary text-white";
+
       const step1Html = `
         <div class="col-12 col-lg-4">
-          <div class="validation-step-card ${vb ? "completed" : "active-turn"}">
+          <div class="validation-step-card ${step1CardClass}">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="step-number-circle ${vb ? "bg-success text-white" : "bg-primary text-white"}">1</span>
+              <span class="step-number-circle ${step1CircleClass}">1</span>
               <span class="badge bg-info text-dark">Rol: Área Usuaria (AU)</span>
             </div>
             <h4 class="h6 fw-bold mb-1">Visto Bueno del Área Usuaria</h4>
             <p class="small text-muted mb-3">
-              El Área Usuaria deja constancia de su validación funcional sobre la implementación.
+              El Área Usuaria valida o rechaza funcionalmente la solución implementada.
             </p>
             ${
               vb
                 ? `<div class="bg-white border border-success-subtle rounded-2 p-2 small mb-2">
-                    <div class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Visto Bueno Registrado (${esc(vb.id_evento)})</div>
+                    <div class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Visto Bueno Aprobado (${esc(vb.id_evento)})</div>
                     <div class="text-muted mt-1">Autor: <strong>${esc(vb.autor)}</strong></div>
                     <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(vb.fecha)}</div>
                   </div>`
-                : `<div class="d-grid">
+                : `
+                  ${
+                    vbRechazado
+                      ? `<div class="bg-white border border-danger-subtle rounded-2 p-2 small mb-3">
+                          <div class="text-danger fw-bold"><i class="bi bi-x-octagon-fill me-1"></i>Visto Bueno Rechazado (${esc(vbRechazado.id_evento)})</div>
+                          <div class="text-dark mt-1"><strong>Motivo:</strong> ${esc(vbRechazado.motivo || "Sin detalle")}</div>
+                          <div class="text-muted mt-1">Autor: <strong>${esc(vbRechazado.autor)}</strong></div>
+                          <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(vbRechazado.fecha)}</div>
+                        </div>`
+                      : ""
+                  }
+                  <div class="d-flex flex-column gap-2">
                     <button type="button" class="btn btn-sm btn-info text-dark fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="ejecutarVistoBueno('${esc(req.codigo)}')">
-                      <i class="bi bi-hand-thumbs-up-fill me-1"></i>Dar Visto Bueno (AU)
+                      <i class="bi bi-hand-thumbs-up-fill me-1"></i>${vbRechazado ? "Aprobar Visto Bueno (AU)" : "Dar Visto Bueno (AU)"}
                     </button>
-                    ${!canDarVistoBueno() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del Área Usuaria (AU).</small>` : ""}
-                  </div>`
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="abrirModalRechazo('VB', '${esc(req.codigo)}', '')">
+                      <i class="bi bi-x-circle me-1"></i>Rechazar Visto Bueno (AU)
+                    </button>
+                    ${!canDarVistoBueno() ? `<small class="text-muted mt-1"><i class="bi bi-lock me-1"></i>Acción exclusiva del Área Usuaria (AU).</small>` : ""}
+                  </div>
+                `
             }
           </div>
         </div>
@@ -2300,7 +2404,7 @@
             </div>
             <h4 class="h6 fw-bold mb-1">Derivación del Visto Bueno</h4>
             <p class="small text-muted mb-3">
-              El Especialista deriva el Visto Bueno previo al Responsable del Proyecto.
+              El Especialista deriva el Visto Bueno aprobado al Responsable del Proyecto.
             </p>
             ${
               derivacion
@@ -2311,8 +2415,13 @@
                     <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(derivacion.fecha)}</div>
                   </div>`
                 : !vb
-                ? `<div class="alert alert-light border small text-muted mb-0">
-                    <i class="bi bi-hourglass-split me-1"></i>Bloqueado: Requiere Visto Bueno previo del Área Usuaria.
+                ? `<div class="alert ${vbRechazado ? "alert-danger" : "alert-light border"} small mb-0">
+                    <i class="bi ${vbRechazado ? "bi-exclamation-octagon" : "bi-hourglass-split"} me-1"></i>
+                    ${
+                      vbRechazado
+                        ? "Bloqueado: El Visto Bueno fue rechazado por el Área Usuaria."
+                        : "Bloqueado: Requiere Visto Bueno aprobado del Área Usuaria."
+                    }
                   </div>`
                 : `<div class="d-grid">
                     <button type="button" class="btn btn-sm btn-primary fw-semibold" ${!canDerivarVistoBueno() ? "disabled" : ""} onclick="ejecutarDerivacionVB('${esc(req.codigo)}', '${esc(vb.id_evento)}')">
@@ -2325,17 +2434,32 @@
         </div>
       `;
 
-      // Paso 3: Conformidad del Requerimiento (RP)
+      // Paso 3: Conformidad del Requerimiento (RP) — Aprobar o Rechazar
+      const step3CardClass = conformidad
+        ? "completed"
+        : conformidadRechazada
+        ? "rejected"
+        : derivacion
+        ? "active-turn"
+        : "";
+      const step3CircleClass = conformidad
+        ? "bg-success text-white"
+        : conformidadRechazada
+        ? "bg-danger text-white"
+        : derivacion
+        ? "bg-success text-white"
+        : "bg-secondary-subtle text-secondary";
+
       const step3Html = `
         <div class="col-12 col-lg-4">
-          <div class="validation-step-card ${conformidad ? "completed" : derivacion ? "active-turn" : ""}">
+          <div class="validation-step-card ${step3CardClass}">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="step-number-circle ${conformidad ? "bg-success text-white" : derivacion ? "bg-success text-white" : "bg-secondary-subtle text-secondary"}">3</span>
+              <span class="step-number-circle ${step3CircleClass}">3</span>
               <span class="badge bg-success">Rol: Responsable Proyecto (RP)</span>
             </div>
             <h4 class="h6 fw-bold mb-1">Conformidad del Proyecto</h4>
             <p class="small text-muted mb-3">
-              El Responsable del Proyecto registra la conformidad tras recibir la derivación.
+              El Responsable del Proyecto otorga o rechaza la conformidad final tras recibir la derivación.
             </p>
             ${
               conformidad
@@ -2349,23 +2473,135 @@
                 ? `<div class="alert alert-light border small text-muted mb-0">
                     <i class="bi bi-hourglass-split me-1"></i>Bloqueado: Requiere que el Especialista (EC) derive el Visto Bueno.
                   </div>`
-                : `<div class="d-grid">
+                : `
+                  ${
+                    conformidadRechazada
+                      ? `<div class="bg-white border border-danger-subtle rounded-2 p-2 small mb-3">
+                          <div class="text-danger fw-bold"><i class="bi bi-x-octagon-fill me-1"></i>Conformidad Rechazada (${esc(conformidadRechazada.id_evento)})</div>
+                          <div class="text-dark mt-1"><strong>Motivo:</strong> ${esc(conformidadRechazada.motivo || "Sin detalle")}</div>
+                          <div class="text-muted mt-1">Autor: <strong>${esc(conformidadRechazada.autor)}</strong></div>
+                          <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(conformidadRechazada.fecha)}</div>
+                        </div>`
+                      : ""
+                  }
+                  <div class="d-flex flex-column gap-2">
                     <button type="button" class="btn btn-sm btn-success fw-semibold" ${!canDarConformidad() ? "disabled" : ""} onclick="ejecutarConformidad('${esc(req.codigo)}', '${esc(derivacion.id_evento)}')">
-                      <i class="bi bi-patch-check-fill me-1"></i>Dar Conformidad Final (RP)
+                      <i class="bi bi-patch-check-fill me-1"></i>${conformidadRechazada ? "Aprobar Conformidad Final (RP)" : "Dar Conformidad Final (RP)"}
                     </button>
-                    ${!canDarConformidad() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del Responsable del Proyecto (RP).</small>` : ""}
-                  </div>`
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" ${!canDarConformidad() ? "disabled" : ""} onclick="abrirModalRechazo('CONFORMIDAD', '${esc(req.codigo)}', '${esc(derivacion.id_evento)}')">
+                      <i class="bi bi-x-circle me-1"></i>Rechazar Conformidad (RP)
+                    </button>
+                    ${!canDarConformidad() ? `<small class="text-muted mt-1"><i class="bi bi-lock me-1"></i>Acción exclusiva del Responsable del Proyecto (RP).</small>` : ""}
+                  </div>
+                `
             }
           </div>
         </div>
       `;
 
       container.innerHTML = step1Html + step2Html + step3Html;
+
+      // Renderizar Historial de Decisiones de Validación
+      const histCountEl = document.getElementById("valHistoryCount");
+      const histContainer = document.getElementById("valHistoryContainer");
+      histCountEl.textContent = `${historial.length} evento(s)`;
+
+      if (historial.length === 0) {
+        histContainer.innerHTML = `<div class="text-muted small">Aún no se han registrado eventos de visto bueno, derivación o conformidad para este requerimiento.</div>`;
+      } else {
+        histContainer.innerHTML = `<div class="d-flex flex-column gap-2">` + [...historial]
+          .reverse()
+          .map((ev) => {
+            const isRejected = ev.tipo.toLowerCase().includes("rechazad");
+            const badgeClass = isRejected
+              ? "bg-danger"
+              : ev.tipo === "Conformidad"
+              ? "bg-success"
+              : ev.tipo === "Derivación del visto bueno"
+              ? "bg-primary"
+              : "bg-info text-dark";
+            return `
+              <div class="border rounded-3 p-2 px-3 ${isRejected ? "bg-danger-subtle border-danger-subtle" : "bg-light"}">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="code-tag" style="font-size: 0.72rem;">${esc(ev.id_evento)}</span>
+                    <span class="badge ${badgeClass}">${esc(ev.tipo)}</span>
+                    ${ev.id_evento_previo ? `<span class="text-muted font-mono" style="font-size: 0.72rem;">Ref: ${esc(ev.id_evento_previo)}</span>` : ""}
+                  </div>
+                  <span class="text-muted font-mono" style="font-size: 0.73rem;">${esc(ev.fecha)}</span>
+                </div>
+                ${ev.motivo ? `<div class="small text-dark mt-1"><strong>Motivo del rechazo:</strong> ${esc(ev.motivo)}</div>` : ""}
+                <div class="text-muted mt-1" style="font-size: 0.74rem;">Registrado por: <strong>${esc(ev.autor)}</strong></div>
+              </div>
+            `;
+          })
+          .join("") + `</div>`;
+      }
     }
 
     document.getElementById("valReqSelector").addEventListener("change", function (e) {
       selectedReqCode = e.target.value;
       renderValidacionModule();
+    });
+
+    function abrirModalRechazo(tipo, codigoReq, idEventoPrevio) {
+      if (tipo === "VB" && !canDarVistoBueno()) return;
+      if (tipo === "CONFORMIDAD" && !canDarConformidad()) return;
+
+      document.getElementById("formRechazoValidacion").reset();
+      document.getElementById("rechazoErrorBox").classList.add("d-none");
+      document.getElementById("rechazoTipoInput").value = tipo;
+      document.getElementById("rechazoCodigoReqInput").value = codigoReq;
+      document.getElementById("rechazoEventoPrevioInput").value = idEventoPrevio || "";
+
+      const titulo = tipo === "VB"
+        ? "Rechazar Visto Bueno (Área Usuaria)"
+        : "Rechazar Conformidad (Responsable del Proyecto)";
+      document.getElementById("modalRechazoTitle").innerHTML = `<i class="bi bi-x-octagon-fill me-2"></i>${titulo}`;
+
+      document.getElementById("rechazoResumenBox").innerHTML = `
+        <div><strong>Requerimiento:</strong> <span class="code-tag">${esc(codigoReq)}</span></div>
+        <div class="mt-1"><strong>Responsable que rechaza:</strong> ${esc(currentUser.nombre)} (${esc(currentUser.perfil)})</div>
+      `;
+
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalRechazoValidacion")).show();
+    }
+
+    document.getElementById("formRechazoValidacion").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const tipo = document.getElementById("rechazoTipoInput").value;
+      const codigoReq = document.getElementById("rechazoCodigoReqInput").value;
+      const idEventoPrevio = document.getElementById("rechazoEventoPrevioInput").value || null;
+      const motivo = document.getElementById("rechazoMotivoInput").value.trim();
+      const errBox = document.getElementById("rechazoErrorBox");
+
+      if (!motivo) {
+        errBox.textContent = "Debe ingresar el motivo del rechazo para registrar la decisión.";
+        errBox.classList.remove("d-none");
+        return;
+      }
+      errBox.classList.add("d-none");
+
+      if (tipo === "VB" && !canDarVistoBueno()) return;
+      if (tipo === "CONFORMIDAD" && !canDarConformidad()) return;
+
+      const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
+      const tipoEvento = tipo === "VB" ? "Visto bueno rechazado" : "Conformidad rechazada";
+
+      state.eventos_validacion.push({
+        id_evento: newValId,
+        codigo_req: codigoReq,
+        id_evento_previo: idEventoPrevio,
+        tipo: tipoEvento,
+        motivo,
+        autor: `${currentUser.nombre} (${currentUser.perfil})`,
+        fecha: nowStr()
+      });
+
+      saveState();
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalRechazoValidacion")).hide();
+      renderAll();
+      notify(`${tipoEvento} (${newValId}) registrado con su motivo.`, "danger");
     });
 
     function ejecutarVistoBueno(codigoReq) {
