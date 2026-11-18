@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGR-INEI | Gestión de Requerimientos Informáticos</title>
+
+  <!-- Google Fonts: Inter y JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5.3.3 CSS y Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <style>
+    /* ==========================================================================
+       PALETA INSTITUCIONAL (INEI - PROYECTO EVALUACIÓN DOCENTE ASCENSO 2026)
+       ========================================================================== */
+    :root {
+      --inei-navy-dark: #0F2C59;
+      --inei-navy: #1B4965;
+      --inei-steel: #2B6CB0;
+      --inei-bg: #F4F6F9;
+      --inei-surface: #FFFFFF;
+      --inei-border: #DCE3EC;
+      --inei-text: #1E293B;
+      --inei-muted: #64748B;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--inei-bg);
+      color: var(--inei-text);
+      font-size: 0.93rem;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Encabezado Institucional */
+    .navbar-inei {
+      background: linear-gradient(135deg, var(--inei-navy-dark) 0%, var(--inei-navy) 100%);
+      border-bottom: 3px solid var(--inei-steel);
+      box-shadow: 0 2px 8px rgba(15, 44, 89, 0.14);
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #FFFFFF;
+      flex-shrink: 0;
+    }
+
+    /* Tarjetas KPI */
+    .kpi-box {
+      background: var(--inei-surface);
+      border: 1px solid var(--inei-border);
+      border-left: 4px solid var(--inei-steel);
+      border-radius: 10px;
+      padding: 0.95rem 1.1rem;
+      height: 100%;
+    }
+    .kpi-box.kpi-navy { border-left-color: var(--inei-navy-dark); }
+    .kpi-box.kpi-danger { border-left-color: #DC2626; }
+    .kpi-box.kpi-success { border-left-color: #16A34A; }
+
+    /* Pestañas de los 3 módulos básicos */
+    .nav-modules {
+      background: var(--inei-surface);
+      border: 1px solid var(--inei-border);
+      border-radius: 12px;
+      padding: 0.4rem;
+      gap: 0.4rem;
+    }
+
+    .nav-modules .nav-link {
+      color: var(--inei-muted);
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 0.65rem 1.15rem;
+      transition: all 0.16s ease;
+    }
+
+    .nav-modules .nav-link:hover {
+      color: var(--inei-navy-dark);
+      background-color: #F1F5F9;
+    }
+
+    .nav-modules .nav-link.active {
+      background-color: var(--inei-navy-dark);
+      color: #FFFFFF;
+    }
+
+    /* Contenedores principales */
+    .card-panel {
+      background: var(--inei-surface);
+      border: 1px solid var(--inei-border);
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(15, 44, 89, 0.04);
+    }
+
+    .btn-inei {
+      background-color: var(--inei-navy-dark);
+      border-color: var(--inei-navy-dark);
+      color: #FFFFFF;
+      font-weight: 500;
+      border-radius: 8px;
+    }
+
+    .btn-inei:hover {
+      background-color: var(--inei-navy);
+      border-color: var(--inei-navy);
+      color: #FFFFFF;
+    }
+
+    /* Badges y códigos */
+    .code-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background-color: #EFF6FF;
+      color: var(--inei-navy-dark);
+      border: 1px solid #BFDBFE;
+      padding: 0.22rem 0.52rem;
+      border-radius: 6px;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .badge-pill-status {
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+    }
+
+    /* Tabla limpia */
+    .table-clean thead th {
+      background-color: #F8FAFC;
+      color: var(--inei-navy-dark);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid var(--inei-border);
+      padding: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .table-clean tbody td {
+      padding: 0.8rem 0.75rem;
+      vertical-align: middle;
+      border-bottom: 1px solid #EDF2F7;
+    }
+
+    .table-clean tbody tr:hover {
+      background-color: #F8FBFF;
+    }
+
+    /* Línea de tiempo de seguimiento */
+    .timeline-list {
+      position: relative;
+      padding-left: 1.65rem;
+      border-left: 2px solid #CBD5E1;
+      margin-left: 0.5rem;
+    }
+
+    .timeline-entry {
+      position: relative;
+      background: #F8FAFC;
+      border: 1px solid var(--inei-border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .timeline-entry:last-child {
+      margin-bottom: 0;
+    }
+
+    .timeline-marker {
+      position: absolute;
+      left: -2.12rem;
+      top: 1rem;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--inei-steel);
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 2px var(--inei-steel);
+    }
+
+    .timeline-entry.latest .timeline-marker {
+      background: #16A34A;
+      box-shadow: 0 0 0 2px #16A34A;
+    }
+
+    /* Zona de carga de archivos (Drag & Drop) */
+    .file-dropzone {
+      border: 2px dashed #94A3B8;
+      border-radius: 10px;
+      background-color: #F8FAFC;
+      padding: 1.35rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .file-dropzone:hover,
+    .file-dropzone.dragover {
+      border-color: var(--inei-steel);
+      background-color: #EFF6FF;
+    }
+
+    .modal-header-inei {
+      background: linear-gradient(135deg, var(--inei-navy-dark) 0%, var(--inei-navy) 100%);
+      color: #FFFFFF;
+    }
+
+    .modal-header-inei .btn-close {
+      filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* Pantalla de Inicio de Sesión (Login Institucional) */
+    .login-backdrop {
+      min-height: 100vh;
+      background: radial-gradient(circle at top right, #1B4965 0%, #0F2C59 60%, #091C3A 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .login-card {
+      background: #FFFFFF;
+      border-radius: 16px;
+      max-width: 470px;
+      width: 100%;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.32);
+      overflow: hidden;
+    }
+
+    .login-card-header {
+      background: linear-gradient(135deg, #0F2C59 0%, #1B4965 100%);
+      border-bottom: 3px solid #2B6CB0;
+      padding: 1.6rem 1.75rem 1.4rem;
+      color: #FFFFFF;
+    }
+
+    .quick-role-btn {
+      text-align: left;
+      border: 1px solid var(--inei-border);
+      background: #F8FAFC;
+      border-radius: 9px;
+      padding: 0.55rem 0.75rem;
+      transition: all 0.15s ease;
+    }
+
+    .quick-role-btn:hover {
+      background: #EFF6FF;
+      border-color: var(--inei-steel);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       PANTALLA DE INICIO DE SESIÓN (HU-04 / RN-04)
+       ======================================================================== -->
+  <section id="loginScreen" class="login-backdrop">
+    <div class="login-card">
+      <div class="login-card-header">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="brand-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+          </div>
+          <div>
+            <span class="badge bg-light text-dark fw-bold mb-1" style="font-size: 0.68rem;">INEI · ACCESO AUTORIZADO</span>
+            <h1 class="h5 fw-bold mb-0">SGR-INEI · Inicio de Sesión</h1>
+          </div>
+        </div>
+        <p class="small text-white-50 mb-0">
+          Sistema de Gestión de Requerimientos Informáticos · <strong class="text-white">Proyecto Evaluación Docente 2026</strong>
+        </p>
+      </div>
+
+      <div class="p-4">
+        <div id="loginErrorAlert" class="alert alert-danger py-2 px-3 small d-none" role="alert"></div>
+
+        <form id="formLogin" novalidate>
+          <div class="mb-3">
+            <label for="loginEmailInput" class="form-label small fw-semibold">Usuario / Correo Institucional <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-person-fill text-primary"></i></span>
+              <input type="email" id="loginEmailInput" class="form-control" placeholder="usuario@inei.gob.pe" value="lhiguchi@inei.gob.pe" required />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="loginPassInput" class="form-label small fw-semibold">Contraseña <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-key-fill text-primary"></i></span>
+              <input type="password" id="loginPassInput" class="form-control" placeholder="Ingrese su contraseña" value="inei2026" required />
+              <button type="button" class="btn btn-outline-secondary" id="togglePassBtn" title="Mostrar u ocultar contraseña">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-grid mb-3">
+            <button type="submit" class="btn btn-inei py-2 fw-semibold">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Ingresar al Sistema
+            </button>
+          </div>
+        </form>
+
+        <div class="border-top pt-3 mt-2">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.72rem;">
+              <i class="bi bi-person-badge me-1 text-primary"></i>Acceso Rápido por Perfil (HU-04)
+            </span>
+            <span class="badge bg-light text-secondary border font-mono" style="font-size: 0.68rem;">Clave: inei2026</span>
+          </div>
+
+          <div class="d-flex flex-column gap-2">
+            <button type="button" class="quick-role-btn w-100" onclick="quickLogin('lhiguchi@inei.gob.pe')">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-semibold small text-dark">Ing. Luis Alberto Higuchi</span>
+                <span class="badge bg-primary">Responsable Seguimiento</span>
+              </div>
+              <div class="text-muted" style="font-size: 0.73rem;">lhiguchi@inei.gob.pe · Registro, seguimiento, QA y archivos</div>
+            </button>
+
+            <button type="button" class="quick-role-btn w-100" onclick="quickLogin('eorihuela@inei.gob.pe')">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-semibold small text-dark">Eder Paulo Orihuela Espejo</span>
+                <span class="badge bg-danger">Especialista Calidad (QA)</span>
+              </div>
+              <div class="text-muted" style="font-size: 0.73rem;">eorihuela@inei.gob.pe · Observaciones, verificaciones y seguimiento</div>
+            </button>
+
+            <button type="button" class="quick-role-btn w-100" onclick="quickLogin('consulta@inei.gob.pe')">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-semibold small text-dark">Coordinador Área Usuaria</span>
+                <span class="badge bg-secondary">Solo Consulta (RN-04)</span>
+              </div>
+              <div class="text-muted" style="font-size: 0.73rem;">consulta@inei.gob.pe · Visualización y descarga sin edición</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       APLICACIÓN PRINCIPAL (PROTEGIDA POR SESIÓN)
+       ======================================================================== -->
+  <div id="appWrapper" class="d-none">
+
+  <!-- ========================================================================
+       ENCABEZADO INSTITUCIONAL
+       ======================================================================== -->
+  <header class="navbar-inei text-white py-3">
+    <div class="container-fluid px-3 px-lg-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="brand-icon">
+            <i class="bi bi-building-check"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge bg-light text-dark fw-bold" style="font-size: 0.7rem;">INEI</span>
+              <h1 class="h5 fw-bold mb-0">SGR-INEI · Gestión de Requerimientos Informáticos</h1>
+            </div>
+            <p class="mb-0 text-white-50 small mt-1">
+              Proyecto: <strong class="text-white">Evaluación Docente para el Ascenso 2026</strong> · Área de Sistemas y Monitoreo Informático
+            </p>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+          <div class="bg-white bg-opacity-10 border border-white border-opacity-25 rounded-3 px-3 py-1 d-flex align-items-center gap-2">
+            <i class="bi bi-person-circle fs-5"></i>
+            <div class="lh-sm">
+              <div class="small fw-semibold text-white" id="loggedUserName">Usuario</div>
+              <div id="loggedUserRoleBadge" style="font-size: 0.7rem;">Perfil</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalResetDemo" title="Restaurar registros de ejemplo">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar Demo
+          </button>
+          <button type="button" class="btn btn-sm btn-danger fw-semibold" onclick="logoutUser()" title="Cerrar sesión actual">
+            <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Cinta informativa de permisos (Solo Consulta / QA) -->
+  <div id="rolePermissionBanner" class="bg-warning-subtle border-bottom border-warning text-dark py-2 px-3 px-lg-4 small d-none">
+    <div class="container-fluid d-flex align-items-center justify-content-between">
+      <span id="rolePermissionText"></span>
+      <span class="badge bg-dark font-mono">HU-04 · RN-04</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       CONTENIDO PRINCIPAL
+       ======================================================================== -->
+  <main class="container-fluid px-3 px-lg-4 py-4">
+
+    <!-- Indicadores Generales (KPIs) -->
+    <div class="row g-3 mb-4" id="kpiRow"></div>
+
+    <!-- Navegación de las 3 Funciones Básicas: Registro, Seguimiento y Observaciones -->
+    <ul class="nav nav-pills nav-modules mb-4" id="coreTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-registro" data-bs-toggle="pill" data-bs-target="#pane-registro" type="button" role="tab">
+          <i class="bi bi-file-earmark-plus me-1"></i>1. Registro de Requerimientos
+          <span class="badge bg-secondary ms-1" id="badgeTotalReq">0</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-seguimiento" data-bs-toggle="pill" data-bs-target="#pane-seguimiento" type="button" role="tab">
+          <i class="bi bi-arrow-repeat me-1"></i>2. Seguimiento y Estados
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-observaciones" data-bs-toggle="pill" data-bs-target="#pane-observaciones" type="button" role="tab">
+          <i class="bi bi-exclamation-octagon me-1"></i>3. Observaciones y Calidad
+          <span class="badge bg-danger ms-1" id="badgeOpenObs">0</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-archivos" data-bs-toggle="pill" data-bs-target="#pane-archivos" type="button" role="tab">
+          <i class="bi bi-paperclip me-1"></i>4. Archivos y Sustentos
+          <span class="badge bg-primary ms-1" id="badgeTotalFiles">0</span>
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content" id="coreTabsContent">
+
+      <!-- ====================================================================
+           MÓDULO 1: REGISTRO DE REQUERIMIENTOS
+           ==================================================================== -->
+      <div class="tab-pane fade show active" id="pane-registro" role="tabpanel">
+        <div class="card-panel p-3 p-md-4">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-3 border-bottom">
+            <div>
+              <h2 class="h5 fw-bold mb-1" style="color: var(--inei-navy-dark);">
+                <i class="bi bi-folder2-open me-2 text-primary"></i>Registro y Catálogo de Requerimientos
+              </h2>
+              <p class="text-muted small mb-0">
+                Centraliza las solicitudes de las áreas usuarias con identificador único, área de origen, aplicativo y prioridad.
+              </p>
+            </div>
+            <button type="button" id="btnNuevoRequerimiento" class="btn btn-inei px-3 py-2" onclick="openModalNuevoRequerimiento()">
+              <i class="bi bi-plus-circle me-1"></i>Nuevo Requerimiento
+            </button>
+          </div>
+
+          <!-- Filtros de Búsqueda -->
+          <div class="bg-light border rounded-3 p-3 mb-3">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-5">
+                <label for="searchReqInput" class="form-label small fw-semibold mb-1">Buscar requerimiento</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                  <input type="text" id="searchReqInput" class="form-control" placeholder="Buscar por código (REQ-2026-...), título o descripción..." />
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="filterReqArea" class="form-label small fw-semibold mb-1">Área Solicitante</label>
+                <select id="filterReqArea" class="form-select form-select-sm">
+                  <option value="">Todas las áreas</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-3">
+                <label for="filterReqEstado" class="form-label small fw-semibold mb-1">Estado Actual</label>
+                <select id="filterReqEstado" class="form-select form-select-sm">
+                  <option value="">Todos los estados</option>
+                </select>
+              </div>
+              <div class="col-12 col-md-1 d-grid">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetReqFilters()">Limpiar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla Principal de Requerimientos -->
+          <div class="table-responsive">
+            <table class="table table-clean align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Área Solicitante</th>
+                  <th>Requerimiento</th>
+                  <th>Prioridad</th>
+                  <th>Estado Actual</th>
+                  <th>Responsable</th>
+                  <th class="text-center">Obs. Activas</th>
+                  <th class="text-end">Acciones Rápidas</th>
+                </tr>
+              </thead>
+              <tbody id="reqTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="emptyReqMessage" class="text-center py-5 d-none">
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+            <p class="text-muted small mb-2">No se encontraron requerimientos con los filtros aplicados.</p>
+            <button type="button" class="btn btn-sm btn-outline-primary" onclick="resetReqFilters()">Mostrar todos</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MÓDULO 2: SEGUIMIENTO Y ESTADOS
+           ==================================================================== -->
+      <div class="tab-pane fade" id="pane-seguimiento" role="tabpanel">
+        <!-- Selector de Requerimiento para Seguimiento -->
+        <div class="card-panel p-3 p-md-4 mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-lg-5">
+              <label for="segReqSelector" class="form-label small fw-bold text-uppercase text-muted mb-1">
+                <i class="bi bi-bullseye me-1 text-primary"></i>Seleccione el Requerimiento a Gestionar
+              </label>
+              <select id="segReqSelector" class="form-select fw-semibold"></select>
+            </div>
+            <div class="col-12 col-lg-7" id="segReqSummaryCard">
+              <!-- Resumen dinámico del requerimiento seleccionado -->
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-4">
+          <!-- Formulario de Actualización de Estado y Responsable -->
+          <div class="col-12 col-lg-5">
+            <div class="card-panel p-3 p-md-4 h-100">
+              <h3 class="h6 fw-bold mb-1" style="color: var(--inei-navy-dark);">
+                <i class="bi bi-pencil-square me-1 text-primary"></i>Registrar Avance de Seguimiento
+              </h3>
+              <p class="small text-muted mb-3">
+                Actualiza el estado de atención o el responsable asignado conservando el historial cronológico.
+              </p>
+
+              <form id="formSeguimiento">
+                <div class="mb-3">
+                  <label for="segNuevoEstado" class="form-label small fw-semibold">Estado de Atención <span class="text-danger">*</span></label>
+                  <select id="segNuevoEstado" class="form-select" required></select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="segNuevoResponsable" class="form-label small fw-semibold">Responsable de Seguimiento <span class="text-danger">*</span></label>
+                  <select id="segNuevoResponsable" class="form-select" required></select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="segComentario" class="form-label small fw-semibold">Nota / Detalle de Coordinación <span class="text-danger">*</span></label>
+                  <textarea id="segComentario" class="form-control" rows="3" placeholder="Ej. Se coordinó con OTIN el pase a ambiente de pruebas funcionales..." required></textarea>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-inei">
+                    <i class="bi bi-check2-circle me-1"></i>Guardar Actualización
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" onclick="goToObservacionesFromSeguimiento()">
+                    <i class="bi bi-bug me-1"></i>Ir a Observaciones de este Requerimiento
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Línea de Tiempo del Historial de Seguimiento -->
+          <div class="col-12 col-lg-7">
+            <div class="card-panel p-3 p-md-4 h-100">
+              <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <h3 class="h6 fw-bold mb-0" style="color: var(--inei-navy-dark);">
+                  <i class="bi bi-clock-history me-1 text-primary"></i>Historial Cronológico de Estados y Responsables
+                </h3>
+                <span class="badge bg-light text-dark border font-mono small" id="segHistoryCount">0 registros</span>
+              </div>
+
+              <div id="segTimelineContainer" class="timeline-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MÓDULO 3: OBSERVACIONES Y CALIDAD (QA)
+           ==================================================================== -->
+      <div class="tab-pane fade" id="pane-observaciones" role="tabpanel">
+        <div class="row g-4">
+          <!-- Columna Izquierda: Formularios de Observación y Verificación -->
+          <div class="col-12 col-lg-5">
+            <!-- Formulario 1: Registrar Observación -->
+            <div class="card-panel p-3 p-md-4 mb-4">
+              <h3 class="h6 fw-bold text-danger mb-1">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>Registrar Nueva Observación Funcional
+              </h3>
+              <p class="small text-muted mb-3">
+                Documenta errores o diferencias detectadas durante las pruebas funcionales vinculadas a un requerimiento.
+              </p>
+
+              <form id="formNuevaObservacion">
+                <div class="mb-2">
+                  <label for="obsReqSelect" class="form-label small fw-semibold">Requerimiento Asociado <span class="text-danger">*</span></label>
+                  <select id="obsReqSelect" class="form-select form-select-sm" required></select>
+                </div>
+
+                <div class="mb-2">
+                  <label for="obsSeveridadSelect" class="form-label small fw-semibold">Severidad <span class="text-danger">*</span></label>
+                  <select id="obsSeveridadSelect" class="form-select form-select-sm" required>
+                    <option value="Crítica">Crítica (Bloquea operación)</option>
+                    <option value="Alta">Alta (Error funcional importante)</option>
+                    <option value="Media" selected>Media (Inconsistencia parcial)</option>
+                    <option value="Baja">Baja (Ajuste menor de interfaz)</option>
+                  </select>
+                </div>
+
+                <div class="mb-3">
+                  <label for="obsDescripcionInput" class="form-label small fw-semibold">Descripción de la Observación <span class="text-danger">*</span></label>
+                  <textarea id="obsDescripcionInput" class="form-control form-control-sm" rows="3" placeholder="Detalle el caso probado y el error observado frente a lo solicitado..." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-danger btn-sm w-100 fw-semibold">
+                  <i class="bi bi-plus-circle me-1"></i>Registrar Observación
+                </button>
+              </form>
+            </div>
+
+            <!-- Formulario 2: Registrar Verificación / Conformidad -->
+            <div class="card-panel p-3 p-md-4">
+              <h3 class="h6 fw-bold text-success mb-1">
+                <i class="bi bi-patch-check-fill me-1"></i>Registrar Verificación Funcional
+              </h3>
+              <p class="small text-muted mb-3">
+                Registra el resultado de las pruebas ejecutadas para dar conformidad o rechazar una entrega.
+              </p>
+
+              <form id="formNuevaVerificacion">
+                <div class="mb-2">
+                  <label for="verReqSelect" class="form-label small fw-semibold">Requerimiento Evaluado <span class="text-danger">*</span></label>
+                  <select id="verReqSelect" class="form-select form-select-sm" required></select>
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col-6">
+                    <label for="verResultadoSelect" class="form-label small fw-semibold">Resultado <span class="text-danger">*</span></label>
+                    <select id="verResultadoSelect" class="form-select form-select-sm" required>
+                      <option value="Conforme">Conforme</option>
+                      <option value="No Conforme">No Conforme</option>
+                    </select>
+                  </div>
+                  <div class="col-6">
+                    <label for="verFechaInput" class="form-label small fw-semibold">Fecha Prueba <span class="text-danger">*</span></label>
+                    <input type="date" id="verFechaInput" class="form-control form-control-sm" required />
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="verEvidenciaInput" class="form-label small fw-semibold">Evidencia / Sustento de Prueba <span class="text-danger">*</span></label>
+                  <textarea id="verEvidenciaInput" class="form-control form-control-sm" rows="2" placeholder="Ej. Acta de prueba N° 05-QA: validado al 100% en preproducción." required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-sm w-100 fw-semibold">
+                  <i class="bi bi-check2-square me-1"></i>Guardar Verificación
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Listado de Observaciones y Verificaciones -->
+          <div class="col-12 col-lg-7">
+            <div class="card-panel p-3 p-md-4 mb-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <h3 class="h6 fw-bold mb-0" style="color: var(--inei-navy-dark);">
+                  <i class="bi bi-bug me-1 text-danger"></i>Observaciones Registradas
+                </h3>
+                <div class="d-flex flex-wrap gap-2">
+                  <select id="filterObsByReq" class="form-select form-select-sm w-auto">
+                    <option value="">Todos los requerimientos</option>
+                  </select>
+                  <select id="filterObsByStatus" class="form-select form-select-sm w-auto">
+                    <option value="">Todos los estados</option>
+                    <option value="Pendiente de atención">Pendiente de atención</option>
+                    <option value="Corregido por OTIN">Corregido por OTIN</option>
+                    <option value="Subsanada">Subsanada</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="obsListContainer" class="d-flex flex-column gap-3"></div>
+            </div>
+
+            <!-- Historial Reciente de Verificaciones -->
+            <div class="card-panel p-3 p-md-4">
+              <h3 class="h6 fw-bold mb-3 pb-2 border-bottom" style="color: var(--inei-navy-dark);">
+                <i class="bi bi-clipboard2-check me-1 text-success"></i>Últimas Verificaciones Ejecutadas
+              </h3>
+              <div id="verListContainer" class="d-flex flex-column gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================================
+           MÓDULO 4: CARGA DE ARCHIVOS Y SUSTENTOS DEL REQUERIMIENTO
+           ==================================================================== -->
+      <div class="tab-pane fade" id="pane-archivos" role="tabpanel">
+        <div class="row g-4">
+          <!-- Formulario de Carga de Archivos -->
+          <div class="col-12 col-lg-5">
+            <div class="card-panel p-3 p-md-4">
+              <h3 class="h6 fw-bold mb-1" style="color: var(--inei-navy-dark);">
+                <i class="bi bi-cloud-arrow-up-fill me-1 text-primary"></i>Adjuntar Documentos al Requerimiento
+              </h3>
+              <p class="small text-muted mb-3">
+                Carga fichas de solicitud, correos de autorización, matrices Excel, prototipos o actas de conformidad vinculadas a un requerimiento.
+              </p>
+
+              <form id="formSubirArchivo">
+                <div class="mb-2">
+                  <label for="fileReqSelect" class="form-label small fw-semibold">Requerimiento Asociado <span class="text-danger">*</span></label>
+                  <select id="fileReqSelect" class="form-select form-select-sm" required></select>
+                </div>
+
+                <div class="mb-2">
+                  <label for="fileTipoSelect" class="form-label small fw-semibold">Tipo de Documento <span class="text-danger">*</span></label>
+                  <select id="fileTipoSelect" class="form-select form-select-sm" required>
+                    <option value="Solicitud / Correo de Origen">Solicitud / Correo de Origen</option>
+                    <option value="Especificación Funcional">Especificación Funcional</option>
+                    <option value="Matriz / Archivo de Datos (Excel)">Matriz / Archivo de Datos (Excel)</option>
+                    <option value="Prototipo / Captura de Pantalla">Prototipo / Captura de Pantalla</option>
+                    <option value="Evidencia / Acta de Pruebas QA">Evidencia / Acta de Pruebas QA</option>
+                  </select>
+                </div>
+
+                <div class="mb-2">
+                  <label class="form-label small fw-semibold">Seleccionar Archivo(s) <span class="text-danger">*</span></label>
+                  <div id="fileDropzone" class="file-dropzone">
+                    <i class="bi bi-file-earmark-arrow-up fs-2 text-primary d-block mb-1"></i>
+                    <div class="small fw-semibold text-dark">Haga clic aquí o arrastre sus archivos</div>
+                    <div class="text-muted" style="font-size: 0.74rem;">PDF, Word (.docx), Excel (.xlsx), Imágenes (.png, .jpg) · Máx. 15 MB</div>
+                    <input type="file" id="fileUploadInput" class="d-none" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.zip" />
+                  </div>
+                  <div id="selectedFilesPreview" class="mt-2 d-flex flex-column gap-1"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="fileDescripcionInput" class="form-label small fw-semibold">Descripción o Referencia</label>
+                  <input type="text" id="fileDescripcionInput" class="form-control form-control-sm" placeholder="Ej. Formato de requerimiento visado por el área usuaria..." />
+                </div>
+
+                <button type="submit" class="btn btn-inei btn-sm w-100 fw-semibold py-2">
+                  <i class="bi bi-upload me-1"></i>Subir Archivo(s) al Requerimiento
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Repositorio de Archivos Adjuntos -->
+          <div class="col-12 col-lg-7">
+            <div class="card-panel p-3 p-md-4">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <div>
+                  <h3 class="h6 fw-bold mb-0" style="color: var(--inei-navy-dark);">
+                    <i class="bi bi-folder-check me-1 text-primary"></i>Repositorio de Archivos Adjuntos
+                  </h3>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                  <select id="filterFilesByReq" class="form-select form-select-sm w-auto">
+                    <option value="">Todos los requerimientos</option>
+                  </select>
+                  <select id="filterFilesByTipo" class="form-select form-select-sm w-auto">
+                    <option value="">Todos los tipos</option>
+                    <option value="Solicitud / Correo de Origen">Solicitud / Correo</option>
+                    <option value="Especificación Funcional">Especificación Funcional</option>
+                    <option value="Matriz / Archivo de Datos (Excel)">Matriz / Excel</option>
+                    <option value="Prototipo / Captura de Pantalla">Prototipo / Captura</option>
+                    <option value="Evidencia / Acta de Pruebas QA">Evidencia / Acta QA</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="archivosListContainer" class="d-flex flex-column gap-2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========================================================================
+       MODAL: NUEVO REQUERIMIENTO
+       ======================================================================== -->
+  <div class="modal fade" id="modalNuevoReq" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+        <div class="modal-header modal-header-inei">
+          <h5 class="modal-title fw-bold h6 mb-0">
+            <i class="bi bi-file-earmark-plus me-2"></i>Registrar Nuevo Requerimiento Informático
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <form id="formNuevoReq" novalidate>
+          <div class="modal-body p-4">
+            <div id="nuevoReqErrorBox" class="alert alert-danger d-none small"></div>
+
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label for="modalReqCodigo" class="form-label small fw-semibold">Código Único</label>
+                <input type="text" id="modalReqCodigo" class="form-control font-mono fw-bold bg-light" readonly />
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="modalReqArea" class="form-label small fw-semibold">Área Solicitante <span class="text-danger">*</span></label>
+                <select id="modalReqArea" class="form-select" required>
+                  <option value="">Seleccione área...</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="modalReqApp" class="form-label small fw-semibold">Aplicativo <span class="text-danger">*</span></label>
+                <select id="modalReqApp" class="form-select" required>
+                  <option value="Web">Sistema Web</option>
+                  <option value="Móvil">Aplicativo Móvil</option>
+                  <option value="Web / API">Servicio Web / API</option>
+                </select>
+              </div>
+
+              <div class="col-12 col-md-8">
+                <label for="modalReqTitulo" class="form-label small fw-semibold">Título del Requerimiento <span class="text-danger">*</span></label>
+                <input type="text" id="modalReqTitulo" class="form-control" placeholder="Ej. Módulo de consulta de asistencia de docentes por sede" required />
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label for="modalReqPrioridad" class="form-label small fw-semibold">Prioridad <span class="text-danger">*</span></label>
+                <select id="modalReqPrioridad" class="form-select" required>
+                  <option value="Alta">Alta</option>
+                  <option value="Media" selected>Media</option>
+                  <option value="Baja">Baja</option>
+                </select>
+              </div>
+
+              <div class="col-12">
+                <label for="modalReqDescripcion" class="form-label small fw-semibold">Descripción Funcional y Origen <span class="text-danger">*</span></label>
+                <textarea id="modalReqDescripcion" class="form-control" rows="3" placeholder="Describa la necesidad operativa solicitada por el área usuaria..." required></textarea>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label for="modalReqResponsable" class="form-label small fw-semibold">Responsable Asignado <span class="text-danger">*</span></label>
+                <select id="modalReqResponsable" class="form-select" required></select>
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="form-label small fw-semibold">Estado Inicial</label>
+                <input type="text" class="form-control bg-light" value="Registrado" readonly />
+              </div>
+
+              <div class="col-12">
+                <label for="modalReqFiles" class="form-label small fw-semibold">
+                  <i class="bi bi-paperclip me-1 text-primary"></i>Archivos Adjuntos de Sustento (Opcional)
+                </label>
+                <input type="file" id="modalReqFiles" class="form-control form-control-sm" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.png,.jpg,.jpeg,.zip" />
+                <div class="form-text" style="font-size: 0.74rem;">
+                  Puede adjuntar el correo de solicitud, formato de requerimiento o archivo Excel de referencia.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-inei px-4">
+              <i class="bi bi-save me-1"></i>Guardar Requerimiento
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       MODAL: RESTAURAR DATOS DEMO
+       ======================================================================== -->
+  <div class="modal fade" id="modalResetDemo" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+        <div class="modal-header bg-warning text-dark">
+          <h6 class="modal-title fw-bold mb-0">Restaurar Datos Demo</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body small">
+          ¿Desea restablecer los requerimientos, historiales y observaciones iniciales del proyecto?
+        </div>
+        <div class="modal-footer bg-light">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-sm btn-warning fw-semibold" onclick="resetDemoData()">Sí, restaurar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast de Notificaciones -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="appToast" class="toast align-items-center text-white bg-primary border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body fw-medium" id="appToastBody">Listo.</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- Fin #appWrapper -->
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    /* ==========================================================================
+       RESPALDO NATIVO DE COMPONENTES BOOTSTRAP (Modal, Tab, Toast)
+       ========================================================================== */
+    (function ensureBootstrap() {
+      if (typeof window.bootstrap !== "undefined") return;
+
+      const modals = new WeakMap();
+      const tabs = new WeakMap();
+
+      class SimpleModal {
+        constructor(el) {
+          this.el = typeof el === "string" ? document.querySelector(el) : el;
+          if (this.el) modals.set(this.el, this);
+        }
+        static getOrCreateInstance(el) {
+          const target = typeof el === "string" ? document.querySelector(el) : el;
+          return modals.get(target) || new SimpleModal(target);
+        }
+        show() {
+          if (!this.el) return;
+          this.el.style.display = "block";
+          this.el.classList.add("show");
+          document.body.classList.add("modal-open");
+          if (!document.querySelector(".modal-backdrop")) {
+            const bd = document.createElement("div");
+            bd.className = "modal-backdrop fade show";
+            document.body.appendChild(bd);
+          }
+        }
+        hide() {
+          if (!this.el) return;
+          this.el.classList.remove("show");
+          this.el.style.display = "none";
+          document.body.classList.remove("modal-open");
+          document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
+        }
+      }
+
+      class SimpleTab {
+        constructor(el) {
+          this.el = typeof el === "string" ? document.querySelector(el) : el;
+          if (this.el) tabs.set(this.el, this);
+        }
+        static getOrCreateInstance(el) {
+          const target = typeof el === "string" ? document.querySelector(el) : el;
+          return tabs.get(target) || new SimpleTab(target);
+        }
+        show() {
+          if (!this.el) return;
+          const nav = this.el.closest(".nav");
+          if (nav) nav.querySelectorAll(".nav-link").forEach((l) => l.classList.remove("active"));
+          this.el.classList.add("active");
+          const selector = this.el.getAttribute("data-bs-target");
+          const pane = selector ? document.querySelector(selector) : null;
+          if (pane && pane.parentElement) {
+            pane.parentElement.querySelectorAll(":scope > .tab-pane").forEach((p) => p.classList.remove("show", "active"));
+            pane.classList.add("show", "active");
+          }
+        }
+      }
+
+      class SimpleToast {
+        constructor(el) {
+          this.el = typeof el === "string" ? document.querySelector(el) : el;
+        }
+        show() {
+          if (!this.el) return;
+          this.el.style.display = "block";
+          this.el.classList.add("show");
+          setTimeout(() => {
+            this.el.classList.remove("show");
+            this.el.style.display = "none";
+          }, 3500);
+        }
+      }
+
+      document.addEventListener("click", (e) => {
+        const mTrig = e.target.closest('[data-bs-toggle="modal"]');
+        if (mTrig) {
+          e.preventDefault();
+          SimpleModal.getOrCreateInstance(mTrig.getAttribute("data-bs-target")).show();
+          return;
+        }
+        const mClose = e.target.closest('[data-bs-dismiss="modal"]');
+        if (mClose) {
+          SimpleModal.getOrCreateInstance(mClose.closest(".modal")).hide();
+          return;
+        }
+        const tTrig = e.target.closest('[data-bs-toggle="pill"], [data-bs-toggle="tab"]');
+        if (tTrig) {
+          e.preventDefault();
+          SimpleTab.getOrCreateInstance(tTrig).show();
+        }
+      });
+
+      window.bootstrap = { Modal: SimpleModal, Tab: SimpleTab, Toast: SimpleToast };
+    })();
+
+    /* ==========================================================================
+       DATOS DEL PROYECTO (EVALUACIÓN DOCENTE PARA EL ASCENSO 2026 - INEI)
+       ========================================================================== */
+    const STORAGE_KEY = "sgr_inei_simple_v2";
+    const AUTH_SESSION_KEY = "sgr_inei_session_v1";
+    const uploadedFileBlobs = new Map();
+
+    const USUARIOS_SISTEMA = [
+      {
+        email: "lhiguchi@inei.gob.pe",
+        password: "inei2026",
+        nombre: "Ing. Luis Alberto Higuchi",
+        rol: "seguimiento",
+        rolLabel: "Responsable de Seguimiento",
+        badgeClass: "bg-primary text-white"
+      },
+      {
+        email: "eorihuela@inei.gob.pe",
+        password: "inei2026",
+        nombre: "Eder Paulo Orihuela Espejo",
+        rol: "qa",
+        rolLabel: "Especialista Control de Calidad",
+        badgeClass: "bg-danger text-white"
+      },
+      {
+        email: "consulta@inei.gob.pe",
+        password: "inei2026",
+        nombre: "Coordinador Área Usuaria",
+        rol: "consulta",
+        rolLabel: "Usuario Autorizado (Solo Consulta)",
+        badgeClass: "bg-secondary text-white"
+      }
+    ];
+
+    const CATALOGO_AREAS = [
+      "Dirección Nacional de Evaluación Docente",
+      "Coordinación de Operaciones de Campo",
+      "Logística y Distribución Nacional",
+      "Monitoreo de Sedes y Locales",
+      "Sistemas y Monitoreo Informático"
+    ];
+
+    const CATALOGO_ESTADOS = [
+      "Registrado",
+      "En coordinación con OTIN",
+      "En desarrollo (OTIN)",
+      "En pruebas funcionales (QA)",
+      "Con observaciones",
+      "Verificado / Conforme"
+    ];
+
+    const CATALOGO_RESPONSABLES = [
+      "Ing. Luis Alberto Higuchi",
+      "Eder Paulo Orihuela Espejo",
+      "Coordinador Área Usuaria"
+    ];
+
+    function getSeedData() {
+      return {
+        requerimientos: [
+          {
+            codigo: "REQ-2026-001",
+            area: "Dirección Nacional de Evaluación Docente",
+            aplicativo: "Web",
+            titulo: "Módulo de consulta de padrón nominal de docentes por sede",
+            descripcion: "Permitir filtrar y exportar el padrón oficial de docentes inscritos por región, UGEL y local de evaluación.",
+            prioridad: "Alta",
+            estado: "Verificado / Conforme",
+            responsable: "Ing. Luis Alberto Higuchi",
+            fecha_registro: "2026-09-02 09:15"
+          },
+          {
+            codigo: "REQ-2026-002",
+            area: "Coordinación de Operaciones de Campo",
+            aplicativo: "Móvil",
+            titulo: "Registro de asistencia biométrica y código QR de aplicadores",
+            descripcion: "Captura de ingreso y salida de aplicadores en locales de evaluación con sincronización offline.",
+            prioridad: "Alta",
+            estado: "Con observaciones",
+            responsable: "Eder Paulo Orihuela Espejo",
+            fecha_registro: "2026-09-05 11:30"
+          },
+          {
+            codigo: "REQ-2026-003",
+            area: "Logística y Distribución Nacional",
+            aplicativo: "Web",
+            titulo: "Control de trazabilidad de cajas de instrumentos de evaluación",
+            descripcion: "Seguimiento por código de barras desde almacén central hasta entrega en sede departamental.",
+            prioridad: "Media",
+            estado: "En desarrollo (OTIN)",
+            responsable: "Ing. Luis Alberto Higuchi",
+            fecha_registro: "2026-09-10 15:20"
+          },
+          {
+            codigo: "REQ-2026-004",
+            area: "Monitoreo de Sedes y Locales",
+            aplicativo: "Web / API",
+            titulo: "Tablero de incidencias en tiempo real durante jornada de aplicación",
+            descripcion: "Visualización consolidada de alertas reportadas por supervisores nacionales durante el examen.",
+            prioridad: "Alta",
+            estado: "En pruebas funcionales (QA)",
+            responsable: "Eder Paulo Orihuela Espejo",
+            fecha_registro: "2026-09-14 10:05"
+          }
+        ],
+        seguimiento: [
+          {
+            id: "SEG-001",
+            codigo_req: "REQ-2026-001",
+            estado: "Registrado",
+            responsable: "Ing. Luis Alberto Higuchi",
+            fecha: "2026-09-02 09:15",
+            nota: "Solicitud recibida mediante correo institucional de Dirección Nacional."
+          },
+          {
+            id: "SEG-002",
+            codigo_req: "REQ-2026-001",
+            estado: "Verificado / Conforme",
+            responsable: "Eder Paulo Orihuela Espejo",
+            fecha: "2026-09-08 16:40",
+            nota: "Pruebas funcionales aprobadas al 100% en entorno de preproducción."
+          },
+          {
+            id: "SEG-003",
+            codigo_req: "REQ-2026-002",
+            estado: "Registrado",
+            responsable: "Ing. Luis Alberto Higuchi",
+            fecha: "2026-09-05 11:30",
+            nota: "Levantamiento funcional de requerimientos móviles para control de asistencia."
+          },
+          {
+            id: "SEG-004",
+            codigo_req: "REQ-2026-002",
+            estado: "Con observaciones",
+            responsable: "Eder Paulo Orihuela Espejo",
+            fecha: "2026-09-12 14:10",
+            nota: "Se detectó duplicidad al sincronizar registros offline en modo avión."
+          },
+          {
+            id: "SEG-005",
+            codigo_req: "REQ-2026-003",
+            estado: "En desarrollo (OTIN)",
+            responsable: "Ing. Luis Alberto Higuchi",
+            fecha: "2026-09-11 09:50",
+            nota: "Requerimiento remitido a la Oficina Ejecutiva de Desarrollo de Sistemas (OTIN)."
+          },
+          {
+            id: "SEG-006",
+            codigo_req: "REQ-2026-004",
+            estado: "En pruebas funcionales (QA)",
+            responsable: "Eder Paulo Orihuela Espejo",
+            fecha: "2026-09-16 12:00",
+            nota: "OTIN entregó versión candidata para validación funcional de filtros."
+          }
+        ],
+        observaciones: [
+          {
+            codigo: "OBS-001",
+            codigo_req: "REQ-2026-002",
+            severidad: "Crítica",
+            descripcion: "Al recuperar conexión móvil tras modo offline, el aplicativo duplica el marcaje de asistencia del aplicador.",
+            estado: "Pendiente de atención",
+            fecha: "2026-09-12 14:10"
+          },
+          {
+            codigo: "OBS-002",
+            codigo_req: "REQ-2026-004",
+            severidad: "Media",
+            descripcion: "El contador total de incidencias por departamento no se actualiza al cambiar el filtro de turno.",
+            estado: "Corregido por OTIN",
+            fecha: "2026-09-16 17:25"
+          }
+        ],
+        verificaciones: [
+          {
+            codigo: "VER-001",
+            codigo_req: "REQ-2026-001",
+            resultado: "Conforme",
+            fecha: "2026-09-08",
+            evidencia: "Acta de conformidad QA N° 01-2026: exportación Excel y filtros validados sin errores."
+          }
+        ],
+        archivos: [
+          {
+            codigo: "ARC-001",
+            codigo_req: "REQ-2026-001",
+            nombre: "Ficha_Requerimiento_Padron_Docente.pdf",
+            tipo: "Solicitud / Correo de Origen",
+            tamano: "420.5 KB",
+            fecha: "2026-09-02 09:20",
+            subido_por: "Ing. Luis Alberto Higuchi",
+            descripcion: "Solicitud formal visada por la Dirección Nacional de Evaluación Docente."
+          },
+          {
+            codigo: "ARC-002",
+            codigo_req: "REQ-2026-002",
+            nombre: "Matriz_Campos_Asistencia_QR.xlsx",
+            tipo: "Matriz / Archivo de Datos (Excel)",
+            tamano: "185.0 KB",
+            fecha: "2026-09-05 11:45",
+            subido_por: "Eder Paulo Orihuela Espejo",
+            descripcion: "Diccionario de datos y validaciones de lectura QR para aplicativo móvil."
+          }
+        ]
+      };
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.requerimientos)) {
+            if (!Array.isArray(parsed.archivos)) parsed.archivos = [];
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+      return getSeedData();
+    }
+
+    let state = loadState();
+    let selectedSegReqCode = state.requerimientos[0] ? state.requerimientos[0].codigo : "";
+    let currentUser = loadAuthSession();
+
+    function saveState(data = state) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function loadAuthSession() {
+      try {
+        const raw = sessionStorage.getItem(AUTH_SESSION_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.email) return parsed;
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+      return null;
+    }
+
+    function saveAuthSession(user) {
+      try {
+        if (user) {
+          sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(user));
+        } else {
+          sessionStorage.removeItem(AUTH_SESSION_KEY);
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function canEditData() {
+      return currentUser && (currentUser.rol === "seguimiento" || currentUser.rol === "qa");
+    }
+
+    function canRegisterRequirements() {
+      return currentUser && currentUser.rol === "seguimiento";
+    }
+
+    function loginWithCredentials(email, password) {
+      const normalizedEmail = (email || "").trim().toLowerCase();
+      const found = USUARIOS_SISTEMA.find(
+        (u) => u.email.toLowerCase() === normalizedEmail && u.password === password
+      );
+      const errAlert = document.getElementById("loginErrorAlert");
+
+      if (!found) {
+        errAlert.innerHTML = `<i class="bi bi-exclamation-circle-fill me-1"></i>Credenciales inválidas. Verifique su correo institucional y contraseña.`;
+        errAlert.classList.remove("d-none");
+        return false;
+      }
+
+      errAlert.classList.add("d-none");
+      currentUser = found;
+      saveAuthSession(found);
+      showAppScreen();
+      renderAll();
+      notify(`Bienvenido(a), ${found.nombre} (${found.rolLabel}).`, "success");
+      return true;
+    }
+
+    function quickLogin(email) {
+      const found = USUARIOS_SISTEMA.find((u) => u.email === email);
+      if (!found) return;
+      document.getElementById("loginEmailInput").value = found.email;
+      document.getElementById("loginPassInput").value = found.password;
+      loginWithCredentials(found.email, found.password);
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      saveAuthSession(null);
+      document.getElementById("appWrapper").classList.add("d-none");
+      document.getElementById("loginScreen").classList.remove("d-none");
+      document.getElementById("loginErrorAlert").classList.add("d-none");
+    }
+
+    function showAppScreen() {
+      if (!currentUser) return;
+      document.getElementById("loginScreen").classList.add("d-none");
+      document.getElementById("appWrapper").classList.remove("d-none");
+
+      document.getElementById("loggedUserName").textContent = currentUser.nombre;
+      const badgeEl = document.getElementById("loggedUserRoleBadge");
+      badgeEl.innerHTML = `<span class="badge ${currentUser.badgeClass}" style="font-size: 0.68rem;">${esc(currentUser.rolLabel)}</span>`;
+      applyRolePermissions();
+    }
+
+    function applyRolePermissions() {
+      if (!currentUser) return;
+      const banner = document.getElementById("rolePermissionBanner");
+      const bannerText = document.getElementById("rolePermissionText");
+      const btnNewReq = document.getElementById("btnNuevoRequerimiento");
+
+      const isReadOnly = currentUser.rol === "consulta";
+      const isQA = currentUser.rol === "qa";
+
+      if (isReadOnly) {
+        banner.classList.remove("d-none");
+        bannerText.innerHTML = `<i class="bi bi-lock-fill me-1 text-danger"></i><strong>Modo Solo Consulta activo:</strong> Su perfil tiene permisos de visualización y descarga de documentos; las modificaciones están restringidas.`;
+      } else if (isQA) {
+        banner.classList.remove("d-none");
+        bannerText.innerHTML = `<i class="bi bi-shield-check me-1 text-primary"></i><strong>Perfil Especialista de Control de Calidad:</strong> Habilitado para registrar observaciones, verificaciones, seguimiento y evidencias QA.`;
+      } else {
+        banner.classList.add("d-none");
+      }
+
+      if (btnNewReq) {
+        btnNewReq.disabled = !canRegisterRequirements();
+        btnNewReq.title = canRegisterRequirements()
+          ? "Registrar nuevo requerimiento"
+          : "Solo el Responsable de Seguimiento puede registrar nuevos requerimientos";
+      }
+
+      // Habilitar o deshabilitar formularios según permisos
+      ["formSeguimiento", "formNuevaObservacion", "formNuevaVerificacion", "formSubirArchivo"].forEach((formId) => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.querySelectorAll("input, select, textarea, button[type='submit']").forEach((el) => {
+          el.disabled = isReadOnly;
+        });
+      });
+    }
+
+    function resetDemoData() {
+      state = getSeedData();
+      saveState(state);
+      selectedSegReqCode = state.requerimientos[0].codigo;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalResetDemo")).hide();
+      renderAll();
+      notify("Datos de ejemplo restaurados correctamente.", "success");
+    }
+
+    /* ==========================================================================
+       UTILIDADES GENERALES
+       ========================================================================== */
+    function esc(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function nowStr() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    function todayISO() {
+      const d = new Date();
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    }
+
+    function nextCode(prefix, list, field) {
+      let max = 0;
+      list.forEach((item) => {
+        const num = parseInt((item[field] || "").split("-").pop(), 10);
+        if (!isNaN(num) && num > max) max = num;
+      });
+      return `${prefix}${String(max + 1).padStart(3, "0")}`;
+    }
+
+    function statusBadge(estado) {
+      const styles = {
+        "Registrado": "bg-secondary-subtle text-secondary border border-secondary-subtle",
+        "En coordinación con OTIN": "bg-info-subtle text-info-emphasis border border-info-subtle",
+        "En desarrollo (OTIN)": "bg-primary-subtle text-primary border border-primary-subtle",
+        "En pruebas funcionales (QA)": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+        "Con observaciones": "bg-danger-subtle text-danger border border-danger-subtle",
+        "Verificado / Conforme": "bg-success-subtle text-success border border-success-subtle"
+      };
+      return `<span class="badge badge-pill-status ${styles[estado] || "bg-light text-dark border"}">${esc(estado)}</span>`;
+    }
+
+    function priorityBadge(prio) {
+      const styles = { Alta: "bg-danger text-white", Media: "bg-warning text-dark", Baja: "bg-secondary text-white" };
+      return `<span class="badge ${styles[prio] || "bg-secondary"}">${esc(prio)}</span>`;
+    }
+
+    function obsStatusBadge(estado) {
+      const styles = {
+        "Pendiente de atención": "bg-danger-subtle text-danger border border-danger-subtle",
+        "Corregido por OTIN": "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+        "Subsanada": "bg-success-subtle text-success border border-success-subtle"
+      };
+      return `<span class="badge badge-pill-status ${styles[estado] || "bg-light text-dark"}">${esc(estado)}</span>`;
+    }
+
+    function notify(msg, type = "primary") {
+      const toastEl = document.getElementById("appToast");
+      const bodyEl = document.getElementById("appToastBody");
+      toastEl.className = `toast align-items-center border-0 shadow-lg text-white bg-${type}`;
+      bodyEl.innerHTML = `<i class="bi bi-info-circle me-2"></i>${esc(msg)}`;
+      new bootstrap.Toast(toastEl).show();
+    }
+
+    /* ==========================================================================
+       POBLAR SELECTORES DE CATÁLOGOS
+       ========================================================================== */
+    function initSelects() {
+      // Áreas
+      const areasHtml = CATALOGO_AREAS.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
+      document.getElementById("filterReqArea").innerHTML = `<option value="">Todas las áreas</option>` + areasHtml;
+      document.getElementById("modalReqArea").innerHTML = `<option value="">Seleccione área...</option>` + areasHtml;
+
+      // Estados
+      const estadosHtml = CATALOGO_ESTADOS.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
+      document.getElementById("filterReqEstado").innerHTML = `<option value="">Todos los estados</option>` + estadosHtml;
+      document.getElementById("segNuevoEstado").innerHTML = estadosHtml;
+
+      // Responsables
+      const respHtml = CATALOGO_RESPONSABLES.map((r) => `<option value="${esc(r)}">${esc(r)}</option>`).join("");
+      document.getElementById("modalReqResponsable").innerHTML = respHtml;
+      document.getElementById("segNuevoResponsable").innerHTML = respHtml;
+    }
+
+    function refreshDynamicReqSelects() {
+      const reqOptions = state.requerimientos
+        .map((r) => `<option value="${esc(r.codigo)}">${esc(r.codigo)} — ${esc(r.titulo)}</option>`)
+        .join("");
+
+      const segSel = document.getElementById("segReqSelector");
+      segSel.innerHTML = reqOptions;
+      if (state.requerimientos.some((r) => r.codigo === selectedSegReqCode)) {
+        segSel.value = selectedSegReqCode;
+      } else if (state.requerimientos.length > 0) {
+        selectedSegReqCode = state.requerimientos[0].codigo;
+        segSel.value = selectedSegReqCode;
+      }
+
+      document.getElementById("obsReqSelect").innerHTML = reqOptions;
+      document.getElementById("verReqSelect").innerHTML = reqOptions;
+      document.getElementById("fileReqSelect").innerHTML = reqOptions;
+
+      const currentObsFilter = document.getElementById("filterObsByReq").value;
+      document.getElementById("filterObsByReq").innerHTML = `<option value="">Todos los requerimientos</option>` + reqOptions;
+      document.getElementById("filterObsByReq").value = currentObsFilter;
+
+      const currentFilesFilter = document.getElementById("filterFilesByReq").value;
+      document.getElementById("filterFilesByReq").innerHTML = `<option value="">Todos los requerimientos</option>` + reqOptions;
+      document.getElementById("filterFilesByReq").value = currentFilesFilter;
+    }
+
+    /* ==========================================================================
+       RENDER DE KPIS SUPERIORES
+       ========================================================================== */
+    function renderKpis() {
+      const total = state.requerimientos.length;
+      const enOtin = state.requerimientos.filter((r) => r.estado.includes("OTIN")).length;
+      const obsAbiertas = state.observaciones.filter((o) => o.estado !== "Subsanada").length;
+      const conformes = state.requerimientos.filter((r) => r.estado === "Verificado / Conforme").length;
+      const totalFiles = (state.archivos || []).length;
+
+      document.getElementById("badgeTotalReq").textContent = total;
+      document.getElementById("badgeOpenObs").textContent = obsAbiertas;
+      document.getElementById("badgeTotalFiles").textContent = totalFiles;
+
+      document.getElementById("kpiRow").innerHTML = `
+        <div class="col-6 col-lg-3">
+          <div class="kpi-box kpi-navy">
+            <div class="small text-muted fw-semibold">Total Requerimientos</div>
+            <div class="h3 fw-bold mb-0 mt-1" style="color: var(--inei-navy-dark);">${total}</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="kpi-box">
+            <div class="small text-muted fw-semibold">En Gestión con OTIN</div>
+            <div class="h3 fw-bold mb-0 mt-1 text-primary">${enOtin}</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="kpi-box kpi-danger">
+            <div class="small text-muted fw-semibold">Observaciones Activas</div>
+            <div class="h3 fw-bold mb-0 mt-1 text-danger">${obsAbiertas}</div>
+          </div>
+        </div>
+        <div class="col-6 col-lg-3">
+          <div class="kpi-box kpi-success">
+            <div class="small text-muted fw-semibold">Verificados / Conformes</div>
+            <div class="h3 fw-bold mb-0 mt-1 text-success">${conformes}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    /* ==========================================================================
+       MÓDULO 1: REGISTRO Y LISTADO DE REQUERIMIENTOS
+       ========================================================================== */
+    function renderRegistroModule() {
+      const search = document.getElementById("searchReqInput").value.trim().toLowerCase();
+      const area = document.getElementById("filterReqArea").value;
+      const estado = document.getElementById("filterReqEstado").value;
+
+      const filtered = state.requerimientos.filter((r) => {
+        const matchText = !search || r.codigo.toLowerCase().includes(search) || r.titulo.toLowerCase().includes(search) || r.descripcion.toLowerCase().includes(search);
+        const matchArea = !area || r.area === area;
+        const matchEstado = !estado || r.estado === estado;
+        return matchText && matchArea && matchEstado;
+      });
+
+      const tbody = document.getElementById("reqTableBody");
+      const emptyBox = document.getElementById("emptyReqMessage");
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = "";
+        emptyBox.classList.remove("d-none");
+        return;
+      }
+      emptyBox.classList.add("d-none");
+
+      tbody.innerHTML = filtered
+        .map((req) => {
+          const openObs = state.observaciones.filter((o) => o.codigo_req === req.codigo && o.estado !== "Subsanada").length;
+          const filesCount = (state.archivos || []).filter((a) => a.codigo_req === req.codigo).length;
+          return `
+            <tr>
+              <td>
+                <span class="code-tag">${esc(req.codigo)}</span>
+                <div class="text-muted mt-1" style="font-size: 0.72rem;">${esc(req.fecha_registro)}</div>
+              </td>
+              <td>
+                <div class="fw-semibold small">${esc(req.area)}</div>
+                <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">${esc(req.aplicativo)}</span>
+              </td>
+              <td style="max-width: 300px;">
+                <div class="fw-semibold small text-dark">${esc(req.titulo)}</div>
+                <div class="text-muted text-truncate" style="font-size: 0.78rem; max-width: 290px;" title="${esc(req.descripcion)}">
+                  ${esc(req.descripcion)}
+                </div>
+              </td>
+              <td>${priorityBadge(req.prioridad)}</td>
+              <td>${statusBadge(req.estado)}</td>
+              <td class="small fw-medium">${esc(req.responsable)}</td>
+              <td class="text-center">
+                ${
+                  openObs > 0
+                    ? `<span class="badge bg-danger rounded-pill">${openObs} activa(s)</span>`
+                    : `<span class="badge bg-light text-muted border rounded-pill">0</span>`
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="jumpToSeguimiento('${esc(req.codigo)}')" title="Ir a Seguimiento">
+                  <i class="bi bi-arrow-repeat me-1"></i>Seguimiento
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger me-1" onclick="jumpToObservaciones('${esc(req.codigo)}')" title="Ver o registrar observaciones">
+                  <i class="bi bi-bug me-1"></i>Obs.
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="jumpToArchivos('${esc(req.codigo)}')" title="Archivos adjuntos del requerimiento">
+                  <i class="bi bi-paperclip"></i> ${filesCount}
+                </button>
+              </td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    function resetReqFilters() {
+      document.getElementById("searchReqInput").value = "";
+      document.getElementById("filterReqArea").value = "";
+      document.getElementById("filterReqEstado").value = "";
+      renderRegistroModule();
+    }
+
+    function openModalNuevoRequerimiento() {
+      if (!canRegisterRequirements()) {
+        notify("Acceso denegado (RN-04): Solo el Responsable de Seguimiento puede registrar requerimientos.", "warning");
+        return;
+      }
+      document.getElementById("formNuevoReq").reset();
+      document.getElementById("nuevoReqErrorBox").classList.add("d-none");
+      document.getElementById("modalReqCodigo").value = nextCode("REQ-2026-", state.requerimientos, "codigo");
+      if (currentUser) {
+        document.getElementById("modalReqResponsable").value = currentUser.nombre;
+      }
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalNuevoReq")).show();
+    }
+
+    document.getElementById("formNuevoReq").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!canRegisterRequirements()) {
+        notify("Operación no autorizada para su perfil.", "danger");
+        return;
+      }
+      const errBox = document.getElementById("nuevoReqErrorBox");
+
+      const codigo = document.getElementById("modalReqCodigo").value.trim();
+      const area = document.getElementById("modalReqArea").value;
+      const aplicativo = document.getElementById("modalReqApp").value;
+      const titulo = document.getElementById("modalReqTitulo").value.trim();
+      const prioridad = document.getElementById("modalReqPrioridad").value;
+      const descripcion = document.getElementById("modalReqDescripcion").value.trim();
+      const responsable = document.getElementById("modalReqResponsable").value;
+
+      if (!area || !titulo || !descripcion) {
+        errBox.textContent = "Por favor complete todos los campos obligatorios marcados con (*).";
+        errBox.classList.remove("d-none");
+        return;
+      }
+      errBox.classList.add("d-none");
+
+      const fecha = nowStr();
+      const attachedFiles = Array.from(document.getElementById("modalReqFiles").files || []);
+
+      state.requerimientos.unshift({
+        codigo,
+        area,
+        aplicativo,
+        titulo,
+        descripcion,
+        prioridad,
+        estado: "Registrado",
+        responsable,
+        fecha_registro: fecha
+      });
+
+      attachedFiles.forEach((file) => {
+        const arcCode = nextCode("ARC-", state.archivos, "codigo");
+        uploadedFileBlobs.set(arcCode, file);
+        state.archivos.push({
+          codigo: arcCode,
+          codigo_req: codigo,
+          nombre: file.name,
+          tipo: "Solicitud / Correo de Origen",
+          tamano: formatBytes(file.size),
+          fecha,
+          subido_por: responsable,
+          descripcion: "Archivo adjuntado durante el registro inicial del requerimiento."
+        });
+      });
+
+      state.seguimiento.push({
+        id: nextCode("SEG-", state.seguimiento, "id"),
+        codigo_req: codigo,
+        estado: "Registrado",
+        responsable,
+        fecha,
+        nota: attachedFiles.length > 0
+          ? `Registro inicial del requerimiento con ${attachedFiles.length} archivo(s) de sustento adjunto(s).`
+          : "Registro inicial del requerimiento en el sistema."
+      });
+
+      saveState();
+      selectedSegReqCode = codigo;
+      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalNuevoReq")).hide();
+      renderAll();
+      notify(`Requerimiento ${codigo} registrado correctamente.`, "success");
+    });
+
+    /* ==========================================================================
+       MÓDULO 2: SEGUIMIENTO Y ESTADOS
+       ========================================================================== */
+    function jumpToSeguimiento(codigo) {
+      selectedSegReqCode = codigo;
+      document.getElementById("segReqSelector").value = codigo;
+      renderSeguimientoModule();
+      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-seguimiento")).show();
+    }
+
+    function goToObservacionesFromSeguimiento() {
+      if (selectedSegReqCode) {
+        jumpToObservaciones(selectedSegReqCode);
+      }
+    }
+
+    function renderSeguimientoModule() {
+      const req = state.requerimientos.find((r) => r.codigo === selectedSegReqCode);
+      const summaryEl = document.getElementById("segReqSummaryCard");
+      const timelineEl = document.getElementById("segTimelineContainer");
+
+      if (!req) {
+        summaryEl.innerHTML = `<div class="text-muted small">No hay requerimientos disponibles.</div>`;
+        timelineEl.innerHTML = "";
+        return;
+      }
+
+      // Ficha resumen del requerimiento seleccionado
+      const reqFilesCount = (state.archivos || []).filter((a) => a.codigo_req === req.codigo).length;
+      summaryEl.innerHTML = `
+        <div class="bg-light border rounded-3 p-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+            <span class="fw-bold small text-dark">${esc(req.area)} · <span class="text-muted">${esc(req.aplicativo)}</span></span>
+            <div class="d-flex align-items-center gap-2">
+              ${priorityBadge(req.prioridad)}
+              ${statusBadge(req.estado)}
+            </div>
+          </div>
+          <p class="small text-secondary mb-2">${esc(req.descripcion)}</p>
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-muted">
+            <span><i class="bi bi-person-badge me-1 text-primary"></i>Responsable actual: <strong class="text-dark">${esc(req.responsable)}</strong></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" onclick="jumpToArchivos('${esc(req.codigo)}')">
+              <i class="bi bi-paperclip me-1"></i>${reqFilesCount} archivo(s) adjunto(s)
+            </button>
+          </div>
+        </div>
+      `;
+
+      // Preseleccionar valores actuales en el formulario
+      document.getElementById("segNuevoEstado").value = req.estado;
+      document.getElementById("segNuevoResponsable").value = req.responsable;
+
+      // Historial cronológico (más reciente primero)
+      const historial = state.seguimiento.filter((s) => s.codigo_req === req.codigo).reverse();
+      document.getElementById("segHistoryCount").textContent = `${historial.length} registro(s)`;
+
+      timelineEl.innerHTML = historial
+        .map(
+          (item, index) => `
+          <div class="timeline-entry ${index === 0 ? "latest" : ""}">
+            <span class="timeline-marker"></span>
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+              <div>
+                ${statusBadge(item.estado)}
+                ${index === 0 ? '<span class="badge bg-success ms-1" style="font-size:0.68rem;">Actual</span>' : ""}
+              </div>
+              <span class="text-muted font-mono" style="font-size: 0.74rem;">${esc(item.fecha)}</span>
+            </div>
+            <p class="small text-dark mb-1">${esc(item.nota)}</p>
+            <div class="text-muted" style="font-size: 0.75rem;">
+              <i class="bi bi-person-check me-1"></i>Responsable: <strong>${esc(item.responsable)}</strong>
+            </div>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+    document.getElementById("segReqSelector").addEventListener("change", function (e) {
+      selectedSegReqCode = e.target.value;
+      renderSeguimientoModule();
+    });
+
+    document.getElementById("formSeguimiento").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      const req = state.requerimientos.find((r) => r.codigo === selectedSegReqCode);
+      if (!req) return;
+
+      const nuevoEstado = document.getElementById("segNuevoEstado").value;
+      const nuevoResponsable = document.getElementById("segNuevoResponsable").value;
+      const nota = document.getElementById("segComentario").value.trim();
+
+      if (!nota) {
+        notify("Ingrese una nota o detalle de coordinación.", "warning");
+        return;
+      }
+
+      req.estado = nuevoEstado;
+      req.responsable = nuevoResponsable;
+
+      state.seguimiento.push({
+        id: nextCode("SEG-", state.seguimiento, "id"),
+        codigo_req: req.codigo,
+        estado: nuevoEstado,
+        responsable: nuevoResponsable,
+        fecha: nowStr(),
+        nota
+      });
+
+      document.getElementById("segComentario").value = "";
+      saveState();
+      renderAll();
+      notify(`Seguimiento actualizado para ${req.codigo}.`, "success");
+    });
+
+    /* ==========================================================================
+       MÓDULO 3: OBSERVACIONES Y CALIDAD (QA)
+       ========================================================================== */
+    function jumpToObservaciones(codigo) {
+      document.getElementById("obsReqSelect").value = codigo;
+      document.getElementById("verReqSelect").value = codigo;
+      document.getElementById("filterObsByReq").value = codigo;
+      renderObservacionesModule();
+      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-observaciones")).show();
+    }
+
+    function renderObservacionesModule() {
+      const filterReq = document.getElementById("filterObsByReq").value;
+      const filterStatus = document.getElementById("filterObsByStatus").value;
+
+      const filteredObs = [...state.observaciones].reverse().filter((o) => {
+        const matchReq = !filterReq || o.codigo_req === filterReq;
+        const matchSt = !filterStatus || o.estado === filterStatus;
+        return matchReq && matchSt;
+      });
+
+      const obsContainer = document.getElementById("obsListContainer");
+      if (filteredObs.length === 0) {
+        obsContainer.innerHTML = `<div class="text-center py-4 text-muted small">No hay observaciones registradas con el filtro seleccionado.</div>`;
+      } else {
+        obsContainer.innerHTML = filteredObs
+          .map((obs) => {
+            const req = state.requerimientos.find((r) => r.codigo === obs.codigo_req);
+            const sevColors = { Crítica: "bg-danger text-white", Alta: "bg-warning text-dark", Media: "bg-info text-dark", Baja: "bg-secondary text-white" };
+            return `
+              <div class="border rounded-3 p-3 bg-light">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="code-tag">${esc(obs.codigo)}</span>
+                    <span class="badge bg-dark font-mono">${esc(obs.codigo_req)}</span>
+                    <span class="badge ${sevColors[obs.severidad] || "bg-secondary"}">${esc(obs.severidad)}</span>
+                  </div>
+                  ${obsStatusBadge(obs.estado)}
+                </div>
+                <div class="small fw-semibold text-dark mb-1">${req ? esc(req.titulo) : ""}</div>
+                <p class="small text-secondary mb-2">${esc(obs.descripcion)}</p>
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-2 border-top">
+                  <span class="text-muted font-mono" style="font-size: 0.74rem;">Registrado: ${esc(obs.fecha)}</span>
+                  <div class="d-flex align-items-center gap-1">
+                    <label class="small text-muted me-1" style="font-size: 0.75rem;">Estado:</label>
+                    <select class="form-select form-select-sm w-auto" style="font-size: 0.76rem;" ${!canEditData() ? "disabled" : ""} onchange="cambiarEstadoObservacion('${esc(obs.codigo)}', this.value)">
+                      <option value="Pendiente de atención" ${obs.estado === "Pendiente de atención" ? "selected" : ""}>Pendiente de atención</option>
+                      <option value="Corregido por OTIN" ${obs.estado === "Corregido por OTIN" ? "selected" : ""}>Corregido por OTIN</option>
+                      <option value="Subsanada" ${obs.estado === "Subsanada" ? "selected" : ""}>Subsanada</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join("");
+      }
+
+      // Listado de verificaciones
+      const filteredVer = [...state.verificaciones].reverse().filter((v) => !filterReq || v.codigo_req === filterReq);
+      const verContainer = document.getElementById("verListContainer");
+      if (filteredVer.length === 0) {
+        verContainer.innerHTML = `<div class="text-center py-3 text-muted small">Sin verificaciones registradas para el filtro actual.</div>`;
+      } else {
+        verContainer.innerHTML = filteredVer
+          .map(
+            (v) => `
+            <div class="border rounded-3 p-2 px-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <span class="code-tag">${esc(v.codigo)}</span>
+                  <span class="fw-bold font-mono small">${esc(v.codigo_req)}</span>
+                  <span class="badge ${v.resultado === "Conforme" ? "bg-success" : "bg-danger"}">${esc(v.resultado)}</span>
+                </div>
+                <div class="small text-secondary">${esc(v.evidencia)}</div>
+              </div>
+              <span class="text-muted font-mono small">${esc(v.fecha)}</span>
+            </div>
+          `
+          )
+          .join("");
+      }
+    }
+
+    function cambiarEstadoObservacion(obsCodigo, nuevoEstado) {
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      const obs = state.observaciones.find((o) => o.codigo === obsCodigo);
+      if (!obs) return;
+      obs.estado = nuevoEstado;
+      saveState();
+      renderAll();
+      notify(`Observación ${obsCodigo} actualizada a "${nuevoEstado}".`, "primary");
+    }
+
+    document.getElementById("formNuevaObservacion").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      const codigoReq = document.getElementById("obsReqSelect").value;
+      const severidad = document.getElementById("obsSeveridadSelect").value;
+      const descripcion = document.getElementById("obsDescripcionInput").value.trim();
+
+      if (!descripcion) {
+        notify("Describa la observación funcional detectada.", "warning");
+        return;
+      }
+
+      const newObsCode = nextCode("OBS-", state.observaciones, "codigo");
+      state.observaciones.push({
+        codigo: newObsCode,
+        codigo_req: codigoReq,
+        severidad,
+        descripcion,
+        estado: "Pendiente de atención",
+        fecha: nowStr()
+      });
+
+      // Actualizar automáticamente el estado del requerimiento a "Con observaciones"
+      const req = state.requerimientos.find((r) => r.codigo === codigoReq);
+      if (req && req.estado !== "Con observaciones") {
+        req.estado = "Con observaciones";
+        state.seguimiento.push({
+          id: nextCode("SEG-", state.seguimiento, "id"),
+          codigo_req: codigoReq,
+          estado: "Con observaciones",
+          responsable: req.responsable,
+          fecha: nowStr(),
+          nota: `Observación funcional registrada (${newObsCode}): ${descripcion}`
+        });
+      }
+
+      document.getElementById("obsDescripcionInput").value = "";
+      saveState();
+      renderAll();
+      notify(`Observación ${newObsCode} registrada para ${codigoReq}.`, "danger");
+    });
+
+    document.getElementById("formNuevaVerificacion").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      const codigoReq = document.getElementById("verReqSelect").value;
+      const resultado = document.getElementById("verResultadoSelect").value;
+      const fecha = document.getElementById("verFechaInput").value;
+      const evidencia = document.getElementById("verEvidenciaInput").value.trim();
+
+      if (!fecha || !evidencia) {
+        notify("Complete la fecha y evidencia de la verificación.", "warning");
+        return;
+      }
+
+      const newVerCode = nextCode("VER-", state.verificaciones, "codigo");
+      state.verificaciones.push({
+        codigo: newVerCode,
+        codigo_req: codigoReq,
+        resultado,
+        fecha,
+        evidencia
+      });
+
+      // Si resulta Conforme, actualizar estado del requerimiento
+      const req = state.requerimientos.find((r) => r.codigo === codigoReq);
+      if (req && resultado === "Conforme") {
+        req.estado = "Verificado / Conforme";
+        state.seguimiento.push({
+          id: nextCode("SEG-", state.seguimiento, "id"),
+          codigo_req: codigoReq,
+          estado: "Verificado / Conforme",
+          responsable: req.responsable,
+          fecha: nowStr(),
+          nota: `Verificación conforme (${newVerCode}): ${evidencia}`
+        });
+      }
+
+      document.getElementById("verEvidenciaInput").value = "";
+      saveState();
+      renderAll();
+      notify(`Verificación ${newVerCode} (${resultado}) registrada.`, "success");
+    });
+
+    /* ==========================================================================
+       MÓDULO 4: CARGA DE ARCHIVOS Y SUSTENTOS DEL REQUERIMIENTO
+       ========================================================================== */
+    let pendingUploadFiles = [];
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return "0 KB";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB", "GB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+    }
+
+    function getFileIcon(fileName) {
+      const ext = (fileName || "").split(".").pop().toLowerCase();
+      if (ext === "pdf") return `<i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>`;
+      if (["xls", "xlsx", "csv"].includes(ext)) return `<i class="bi bi-file-earmark-excel-fill text-success fs-4"></i>`;
+      if (["doc", "docx"].includes(ext)) return `<i class="bi bi-file-earmark-word-fill text-primary fs-4"></i>`;
+      if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) return `<i class="bi bi-file-earmark-image-fill text-info fs-4"></i>`;
+      if (["zip", "rar"].includes(ext)) return `<i class="bi bi-file-earmark-zip-fill text-warning fs-4"></i>`;
+      return `<i class="bi bi-file-earmark-text-fill text-secondary fs-4"></i>`;
+    }
+
+    function jumpToArchivos(codigo) {
+      document.getElementById("fileReqSelect").value = codigo;
+      document.getElementById("filterFilesByReq").value = codigo;
+      renderArchivosModule();
+      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-archivos")).show();
+    }
+
+    function updateSelectedFilesPreview() {
+      const container = document.getElementById("selectedFilesPreview");
+      if (pendingUploadFiles.length === 0) {
+        container.innerHTML = "";
+        return;
+      }
+      container.innerHTML = pendingUploadFiles
+        .map(
+          (f, idx) => `
+          <div class="d-flex justify-content-between align-items-center bg-white border rounded px-2 py-1 small">
+            <span class="text-truncate me-2"><i class="bi bi-file-earmark-check text-success me-1"></i><strong>${esc(f.name)}</strong> (${formatBytes(f.size)})</span>
+            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removePendingFile(${idx})" title="Quitar">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+    function removePendingFile(index) {
+      pendingUploadFiles.splice(index, 1);
+      updateSelectedFilesPreview();
+    }
+
+    function renderArchivosModule() {
+      const filterReq = document.getElementById("filterFilesByReq").value;
+      const filterTipo = document.getElementById("filterFilesByTipo").value;
+      const archivos = state.archivos || [];
+
+      const filtered = [...archivos].reverse().filter((a) => {
+        const matchReq = !filterReq || a.codigo_req === filterReq;
+        const matchTipo = !filterTipo || a.tipo === filterTipo;
+        return matchReq && matchTipo;
+      });
+
+      const container = document.getElementById("archivosListContainer");
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-5 text-muted small">
+            <i class="bi bi-folder2-open fs-1 d-block mb-2"></i>
+            No hay archivos adjuntos registrados para el filtro seleccionado.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map((arc) => {
+          const req = state.requerimientos.find((r) => r.codigo === arc.codigo_req);
+          return `
+            <div class="border rounded-3 p-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div class="d-flex align-items-start gap-3 flex-grow-1" style="min-width: 240px;">
+                <div class="pt-1">${getFileIcon(arc.nombre)}</div>
+                <div>
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                    <span class="fw-bold small text-dark">${esc(arc.nombre)}</span>
+                    <span class="badge bg-dark font-mono">${esc(arc.codigo_req)}</span>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">${esc(arc.tipo)}</span>
+                  </div>
+                  <div class="small text-secondary mb-1">${esc(arc.descripcion || "Sin descripción adicional.")}</div>
+                  <div class="text-muted" style="font-size: 0.74rem;">
+                    <span class="font-mono">${esc(arc.codigo)}</span> · Tamaño: <strong>${esc(arc.tamano)}</strong> · Subido: ${esc(arc.fecha)} por <strong>${esc(arc.subido_por)}</strong>
+                    ${req ? ` · <em>${esc(req.area)}</em>` : ""}
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="descargarArchivo('${esc(arc.codigo)}')" title="Descargar archivo">
+                  <i class="bi bi-download me-1"></i>Descargar
+                </button>
+                ${
+                  canEditData()
+                    ? `<button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarArchivo('${esc(arc.codigo)}')" title="Eliminar archivo">
+                        <i class="bi bi-trash"></i>
+                      </button>`
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function descargarArchivo(arcCodigo) {
+      const arc = (state.archivos || []).find((a) => a.codigo === arcCodigo);
+      if (!arc) return;
+
+      const realBlob = uploadedFileBlobs.get(arcCodigo);
+      let url = "";
+      if (realBlob) {
+        url = URL.createObjectURL(realBlob);
+      } else {
+        const fichaTexto = [
+          "INSTITUTO NACIONAL DE ESTADÍSTICA E INFORMÁTICA (INEI)",
+          "PROYECTO: EVALUACIÓN DOCENTE PARA EL ASCENSO 2026",
+          "SISTEMA DE GESTIÓN DE REQUERIMIENTOS INFORMÁTICOS (SGR-INEI)",
+          "=================================================================",
+          `Código de Archivo   : ${arc.codigo}`,
+          `Nombre de Archivo   : ${arc.nombre}`,
+          `Requerimiento       : ${arc.codigo_req}`,
+          `Tipo de Documento   : ${arc.tipo}`,
+          `Fecha de Carga      : ${arc.fecha}`,
+          `Subido por          : ${arc.subido_por}`,
+          `Descripción         : ${arc.descripcion}`,
+          "=================================================================",
+          "Documento de respaldo generado desde el prototipo SGR-INEI."
+        ].join("\n");
+        const blob = new Blob([fichaTexto], { type: "text/plain;charset=utf-8" });
+        url = URL.createObjectURL(blob);
+      }
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = realBlob ? arc.nombre : `${arc.nombre}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      notify(`Descargando "${arc.nombre}"...`, "primary");
+    }
+
+    function eliminarArchivo(arcCodigo) {
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      if (!state.archivos) return;
+      const idx = state.archivos.findIndex((a) => a.codigo === arcCodigo);
+      if (idx === -1) return;
+      const removed = state.archivos[idx];
+      state.archivos.splice(idx, 1);
+      uploadedFileBlobs.delete(arcCodigo);
+      saveState();
+      renderAll();
+      notify(`Archivo "${removed.nombre}" eliminado.`, "warning");
+    }
+
+    document.getElementById("formSubirArchivo").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!canEditData()) {
+        notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+        return;
+      }
+      const codigoReq = document.getElementById("fileReqSelect").value;
+      const tipo = document.getElementById("fileTipoSelect").value;
+      const descripcion = document.getElementById("fileDescripcionInput").value.trim();
+
+      if (pendingUploadFiles.length === 0) {
+        notify("Seleccione o arrastre al menos un archivo para subir.", "warning");
+        return;
+      }
+
+      const req = state.requerimientos.find((r) => r.codigo === codigoReq);
+      const fecha = nowStr();
+      const autor = currentUser ? currentUser.nombre : (req ? req.responsable : "Ing. Luis Alberto Higuchi");
+
+      if (!state.archivos) state.archivos = [];
+      pendingUploadFiles.forEach((file) => {
+        const arcCode = nextCode("ARC-", state.archivos, "codigo");
+        uploadedFileBlobs.set(arcCode, file);
+        state.archivos.push({
+          codigo: arcCode,
+          codigo_req: codigoReq,
+          nombre: file.name,
+          tipo,
+          tamano: formatBytes(file.size),
+          fecha,
+          subido_por: autor,
+          descripcion: descripcion || `Documento adjunto (${tipo})`
+        });
+      });
+
+      const count = pendingUploadFiles.length;
+      pendingUploadFiles = [];
+      document.getElementById("fileUploadInput").value = "";
+      document.getElementById("fileDescripcionInput").value = "";
+      updateSelectedFilesPreview();
+
+      saveState();
+      renderAll();
+      notify(`${count} archivo(s) adjuntado(s) a ${codigoReq}.`, "success");
+    });
+
+    /* ==========================================================================
+       INICIALIZACIÓN GLOBAL
+       ========================================================================== */
+    function renderAll() {
+      refreshDynamicReqSelects();
+      renderKpis();
+      renderRegistroModule();
+      renderSeguimientoModule();
+      renderObservacionesModule();
+      renderArchivosModule();
+      applyRolePermissions();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      initSelects();
+      document.getElementById("verFechaInput").value = todayISO();
+
+      // Eventos del formulario de Login
+      document.getElementById("formLogin").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const email = document.getElementById("loginEmailInput").value;
+        const pass = document.getElementById("loginPassInput").value;
+        loginWithCredentials(email, pass);
+      });
+
+      document.getElementById("togglePassBtn").addEventListener("click", () => {
+        const passInput = document.getElementById("loginPassInput");
+        const icon = document.querySelector("#togglePassBtn i");
+        if (passInput.type === "password") {
+          passInput.type = "text";
+          icon.className = "bi bi-eye-slash";
+        } else {
+          passInput.type = "password";
+          icon.className = "bi bi-eye";
+        }
+      });
+
+      document.getElementById("searchReqInput").addEventListener("input", renderRegistroModule);
+      document.getElementById("filterReqArea").addEventListener("change", renderRegistroModule);
+      document.getElementById("filterReqEstado").addEventListener("change", renderRegistroModule);
+
+      document.getElementById("filterObsByReq").addEventListener("change", renderObservacionesModule);
+      document.getElementById("filterObsByStatus").addEventListener("change", renderObservacionesModule);
+
+      document.getElementById("filterFilesByReq").addEventListener("change", renderArchivosModule);
+      document.getElementById("filterFilesByTipo").addEventListener("change", renderArchivosModule);
+
+      // Eventos de Drag & Drop y selección de archivos
+      const dropzone = document.getElementById("fileDropzone");
+      const fileInput = document.getElementById("fileUploadInput");
+
+      dropzone.addEventListener("click", () => {
+        if (!canEditData()) {
+          notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+          return;
+        }
+        fileInput.click();
+      });
+      fileInput.addEventListener("change", (e) => {
+        pendingUploadFiles = pendingUploadFiles.concat(Array.from(e.target.files || []));
+        updateSelectedFilesPreview();
+      });
+
+      dropzone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        if (canEditData()) dropzone.classList.add("dragover");
+      });
+      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+      dropzone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        if (!canEditData()) {
+          notify("Operación no autorizada (RN-04): Perfil de solo consulta.", "warning");
+          return;
+        }
+        if (e.dataTransfer?.files?.length) {
+          pendingUploadFiles = pendingUploadFiles.concat(Array.from(e.dataTransfer.files));
+          updateSelectedFilesPreview();
+        }
+      });
+
+      if (currentUser) {
+        showAppScreen();
+        renderAll();
+      }
+    });
+  </script>
+</body>
+</html>
