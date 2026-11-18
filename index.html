@@ -1121,6 +1121,7 @@
     const STORAGE_KEY = "sgr_inei_operativo_v4";
     const AUTH_SESSION_KEY = "sgr_inei_auth_operativo_v4";
     const uploadedFileBlobs = new Map();
+    let pendingUploadFiles = [];
 
     const USUARIOS_SISTEMA = [
       {
@@ -1486,6 +1487,7 @@
 
     function resetDemoData() {
       state = getSeedData();
+      uploadedFileBlobs.clear();
       saveState();
       selectedReqCode = state.requerimientos[0].codigo;
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalResetDemo")).hide();
@@ -1551,89 +1553,126 @@
     function getValidationStateForReq(codigoReq) {
       const evs = state.eventos_validacion.filter((e) => e.codigo_req === codigoReq);
 
-      const step1Events = evs.filter(
-        (e) => e.tipo === "Visto bueno" || e.tipo === "Visto bueno rechazado"
-      );
-      const lastStep1 = step1Events[step1Events.length - 1] || null;
-      const vb = lastStep1 && lastStep1.tipo === "Visto bueno" ? lastStep1 : null;
-      const vbRechazado = lastStep1 && lastStep1.tipo === "Visto bueno rechazado" ? lastStep1 : null;
+      // Identificar el último rechazo (si existe) para reiniciar el ciclo activo a partir de él
+      let lastRejectionIndex = -1;
+      for (let i = evs.length - 1; i >= 0; i--) {
+        if (evs[i].tipo === "Visto bueno rechazado" || evs[i].tipo === "Conformidad rechazada") {
+          lastRejectionIndex = i;
+          break;
+        }
+      }
 
+      const lastRejection = lastRejectionIndex >= 0 ? evs[lastRejectionIndex] : null;
+      const currentCycleEvents = lastRejectionIndex >= 0 ? evs.slice(lastRejectionIndex + 1) : evs;
+
+      const vb = currentCycleEvents.find((e) => e.tipo === "Visto bueno") || null;
       const derivacion = vb
-        ? evs.find((e) => e.tipo === "Derivación del visto bueno" && e.id_evento_previo === vb.id_evento) || null
+        ? currentCycleEvents.find(
+            (e) => e.tipo === "Derivación del visto bueno" && e.id_evento_previo === vb.id_evento
+          ) || null
+        : null;
+      const conformidad = derivacion
+        ? currentCycleEvents.find(
+            (e) => e.tipo === "Conformidad" && e.id_evento_previo === derivacion.id_evento
+          ) || null
         : null;
 
-      const step3Events = derivacion
-        ? evs.filter(
-            (e) =>
-              (e.tipo === "Conformidad" || e.tipo === "Conformidad rechazada") &&
-              e.id_evento_previo === derivacion.id_evento
-          )
-        : [];
-      const lastStep3 = step3Events[step3Events.length - 1] || null;
-      const conformidad = lastStep3 && lastStep3.tipo === "Conformidad" ? lastStep3 : null;
-      const conformidadRechazada = lastStep3 && lastStep3.tipo === "Conformidad rechazada" ? lastStep3 : null;
+      // Indica si el ciclo actual está recién reiniciado por un rechazo y pendiente de nuevo Visto Bueno
+      const flowRestartedByRejection = Boolean(lastRejection && currentCycleEvents.length === 0);
 
-      return { vb, vbRechazado, derivacion, conformidad, conformidadRechazada, historial: evs };
+      return {
+        vb,
+        derivacion,
+        conformidad,
+        lastRejection,
+        flowRestartedByRejection,
+        historial: evs
+      };
     }
 
     /* ==========================================================================
-       INICIALIZACIÓN DE SELECTORES
+       INICIALIZACIÓN DE CATÁLOGOS Y SELECTORES
        ========================================================================== */
-    function initSelects() {
-      const areasHtml = CATALOGO_AREAS.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
-      document.getElementById("modalReqArea").innerHTML = `<option value="">Seleccione área de origen...</option>` + areasHtml;
+    function initCatalogsAndSelectors() {
+      const filterEstado = document.getElementById("filterReqEstado");
+      const segEstadoSel = document.getElementById("segNuevoEstadoSelect");
+      const modalAreaSel = document.getElementById("modalReqArea");
 
-      const estadosHtml = CATALOGO_ESTADOS.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
-      document.getElementById("filterReqEstado").innerHTML = `<option value="">Todos los estados</option>` + estadosHtml;
-      document.getElementById("segNuevoEstadoSelect").innerHTML = estadosHtml;
+      filterEstado.innerHTML =
+        `<option value="">Todos los estados</option>` +
+        CATALOGO_ESTADOS.map((e) => `<option value="${esc(e)}">${esc(e)}</option>`).join("");
+
+      segEstadoSel.innerHTML = CATALOGO_ESTADOS.map(
+        (e) => `<option value="${esc(e)}">${esc(e)}</option>`
+      ).join("");
+
+      modalAreaSel.innerHTML =
+        `<option value="">Seleccione área solicitante...</option>` +
+        CATALOGO_AREAS.map((a) => `<option value="${esc(a)}">${esc(a)}</option>`).join("");
     }
 
-    function refreshDynamicReqSelects() {
-      const reqOptions = state.requerimientos
-        .map((r) => `<option value="${esc(r.codigo)}">${esc(r.codigo)} — ${esc(r.area)}</option>`)
+    function syncAllReqSelectors() {
+      if (!state.requerimientos.some((r) => r.codigo === selectedReqCode)) {
+        selectedReqCode = state.requerimientos[0] ? state.requerimientos[0].codigo : "";
+      }
+
+      const optionsHtml = state.requerimientos
+        .map((r) => `<option value="${esc(r.codigo)}">${esc(r.codigo)} · ${esc(r.area)}</option>`)
         .join("");
 
-      if (!state.requerimientos.some((r) => r.codigo === selectedReqCode) && state.requerimientos.length > 0) {
-        selectedReqCode = state.requerimientos[0].codigo;
-      }
-
       const segSel = document.getElementById("segReqSelector");
-      segSel.innerHTML = reqOptions;
-      segSel.value = selectedReqCode;
-
       const valSel = document.getElementById("valReqSelector");
-      valSel.innerHTML = reqOptions;
+      const fileSel = document.getElementById("fileReqSelect");
+      const filterFileSel = document.getElementById("filterFilesByReq");
+
+      const prevFilterFile = filterFileSel.value;
+
+      segSel.innerHTML = optionsHtml;
+      valSel.innerHTML = optionsHtml;
+      fileSel.innerHTML = optionsHtml;
+      filterFileSel.innerHTML = `<option value="">Todos los requerimientos</option>` + optionsHtml;
+
+      segSel.value = selectedReqCode;
       valSel.value = selectedReqCode;
-
-      const fileReqSel = document.getElementById("fileReqSelect");
-      const prevFileReq = fileReqSel.value;
-      fileReqSel.innerHTML = reqOptions;
-      if (state.requerimientos.some((r) => r.codigo === prevFileReq)) {
-        fileReqSel.value = prevFileReq;
+      if (!fileSel.value || !state.requerimientos.some((r) => r.codigo === fileSel.value)) {
+        fileSel.value = selectedReqCode;
       }
+      filterFileSel.value = prevFilterFile;
 
-      const filterFilesSel = document.getElementById("filterFilesByReq");
-      const prevFilterFiles = filterFilesSel.value;
-      filterFilesSel.innerHTML = `<option value="">Todos los requerimientos</option>` + reqOptions;
-      filterFilesSel.value = prevFilterFiles;
-
-      updateOptionalObsDropdownForFileUpload();
+      updateObsSelectForFileUpload();
     }
 
-    function updateOptionalObsDropdownForFileUpload() {
+    function updateObsSelectForFileUpload() {
       const reqCode = document.getElementById("fileReqSelect").value;
+      const obsSel = document.getElementById("fileObsOptionalSelect");
       const obsList = state.observaciones.filter((o) => o.codigo_req === reqCode);
-      const sel = document.getElementById("fileObsOptionalSelect");
-      sel.innerHTML =
+
+      obsSel.innerHTML =
         `<option value="">Ninguna (Documento general del requerimiento)</option>` +
         obsList
-          .map((o) => `<option value="${esc(o.id_observacion)}">${esc(o.id_observacion)} — ${esc(o.descripcion.slice(0, 52))}...</option>`)
+          .map(
+            (o) =>
+              `<option value="${esc(o.id_observacion)}">${esc(o.id_observacion)} · ${esc(
+                o.descripcion.slice(0, 60)
+              )}${o.descripcion.length > 60 ? "..." : ""}</option>`
+          )
           .join("");
     }
 
     /* ==========================================================================
-       KPIS SUPERIORES
+       RENDERIZADO GENERAL Y KPIS
        ========================================================================== */
+    function renderAll() {
+      if (!currentUser) return;
+      applyRolePermissions();
+      syncAllReqSelectors();
+      renderKpis();
+      renderRequerimientosTable();
+      renderSeguimientoModule();
+      renderArchivosModule();
+      renderValidacionModule();
+    }
+
     function renderKpis() {
       const total = state.requerimientos.length;
       const obsSinSubsanar = state.observaciones.filter(
@@ -1641,7 +1680,7 @@
       ).length;
       const pendientesConformidad = state.requerimientos.filter((r) => {
         const v = getValidationStateForReq(r.codigo);
-        return v.derivacion && !v.conformidad && !v.conformidadRechazada;
+        return v.derivacion && !v.conformidad;
       }).length;
       const conConformidad = state.requerimientos.filter(
         (r) => getValidationStateForReq(r.codigo).conformidad
@@ -1654,46 +1693,50 @@
       document.getElementById("kpiRow").innerHTML = `
         <div class="col-6 col-lg-3">
           <div class="kpi-box kpi-navy">
-            <div class="small text-muted fw-semibold">Total Requerimientos</div>
+            <div class="text-muted small fw-semibold">Total Requerimientos</div>
             <div class="h3 fw-bold mb-0 mt-1" style="color: var(--inei-navy-dark);">${total}</div>
+            <div class="text-muted" style="font-size: 0.73rem;">Registrados en el proyecto</div>
           </div>
         </div>
         <div class="col-6 col-lg-3">
           <div class="kpi-box kpi-warning">
-            <div class="small text-muted fw-semibold">Obs. Pendientes de Subsanar</div>
-            <div class="h3 fw-bold mb-0 mt-1 text-warning">${obsSinSubsanar}</div>
+            <div class="text-muted small fw-semibold">Obs. Sin Subsanar</div>
+            <div class="h3 fw-bold text-danger mb-0 mt-1">${obsSinSubsanar}</div>
+            <div class="text-muted" style="font-size: 0.73rem;">Pendientes de atención</div>
           </div>
         </div>
         <div class="col-6 col-lg-3">
           <div class="kpi-box">
-            <div class="small text-muted fw-semibold">Derivados para Conformidad</div>
-            <div class="h3 fw-bold mb-0 mt-1 text-primary">${pendientesConformidad}</div>
+            <div class="text-muted small fw-semibold">Derivados para Conformidad</div>
+            <div class="h3 fw-bold text-primary mb-0 mt-1">${pendientesConformidad}</div>
+            <div class="text-muted" style="font-size: 0.73rem;">En bandeja del Responsable</div>
           </div>
         </div>
         <div class="col-6 col-lg-3">
           <div class="kpi-box kpi-success">
-            <div class="small text-muted fw-semibold">Con Conformidad (RP)</div>
-            <div class="h3 fw-bold mb-0 mt-1 text-success">${conConformidad}</div>
+            <div class="text-muted small fw-semibold">Con Conformidad Final</div>
+            <div class="h3 fw-bold text-success mb-0 mt-1">${conConformidad}</div>
+            <div class="text-muted" style="font-size: 0.73rem;">Validados por RP</div>
           </div>
         </div>
       `;
     }
 
     /* ==========================================================================
-       MÓDULO 1: REGISTRO Y CONSULTA
+       MÓDULO 1: REGISTRO, CONSULTA Y REPORTE CSV
        ========================================================================== */
-    function renderRegistroModule() {
-      const searchCode = document.getElementById("filterReqCodigo").value.trim().toLowerCase();
-      const filterEstado = document.getElementById("filterReqEstado").value;
+    function renderRequerimientosTable() {
+      const q = (document.getElementById("filterReqCodigo").value || "").trim().toLowerCase();
+      const est = document.getElementById("filterReqEstado").value;
 
       const filtered = state.requerimientos.filter((r) => {
-        const matchCode =
-          !searchCode ||
-          r.codigo.toLowerCase().includes(searchCode) ||
-          r.descripcion.toLowerCase().includes(searchCode) ||
-          r.area.toLowerCase().includes(searchCode);
-        const matchEstado = !filterEstado || r.estado_actual === filterEstado;
-        return matchCode && matchEstado;
+        const matchText =
+          !q ||
+          r.codigo.toLowerCase().includes(q) ||
+          r.descripcion.toLowerCase().includes(q) ||
+          r.area.toLowerCase().includes(q);
+        const matchEstado = !est || r.estado_actual === est;
+        return matchText && matchEstado;
       });
 
       const tbody = document.getElementById("reqTableBody");
@@ -1704,6 +1747,7 @@
         emptyBox.classList.remove("d-none");
         return;
       }
+
       emptyBox.classList.add("d-none");
 
       tbody.innerHTML = filtered
@@ -1712,14 +1756,14 @@
           let valBadge = `<span class="badge bg-light text-muted border">Sin visto bueno</span>`;
           if (val.conformidad) {
             valBadge = `<span class="badge bg-success"><i class="bi bi-check-all me-1"></i>Conforme (RP)</span>`;
-          } else if (val.conformidadRechazada) {
-            valBadge = `<span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Conformidad Rechazada</span>`;
           } else if (val.derivacion) {
             valBadge = `<span class="badge bg-primary"><i class="bi bi-send-check me-1"></i>VB Derivado (EC)</span>`;
           } else if (val.vb) {
             valBadge = `<span class="badge bg-info text-dark"><i class="bi bi-check2 me-1"></i>Visto Bueno (AU)</span>`;
-          } else if (val.vbRechazado) {
-            valBadge = `<span class="badge bg-danger"><i class="bi bi-x-octagon me-1"></i>VB Rechazado (AU)</span>`;
+          } else if (val.flowRestartedByRejection) {
+            const motivoCorto =
+              val.lastRejection.tipo === "Conformidad rechazada" ? "Conf. rechazada" : "VB rechazado";
+            valBadge = `<span class="badge bg-danger"><i class="bi bi-arrow-counterclockwise me-1"></i>Reiniciado (${motivoCorto})</span>`;
           }
 
           const obsCount = state.observaciones.filter((o) => o.codigo_req === req.codigo).length;
@@ -1729,30 +1773,34 @@
             <tr>
               <td>
                 <span class="code-tag">${esc(req.codigo)}</span>
-                <div class="text-muted mt-1" style="font-size: 0.72rem;">${esc(req.fecha_registro)}</div>
+                <div class="text-muted font-mono mt-1" style="font-size: 0.7rem;">${esc(req.fecha_registro)}</div>
               </td>
-              <td>
-                <div class="fw-semibold small">${esc(req.area)}</div>
+              <td class="fw-semibold small" style="max-width: 190px;">${esc(req.area)}</td>
+              <td class="small" style="max-width: 310px;">
+                <div>${esc(req.descripcion)}</div>
+                <div class="d-flex gap-2 mt-1">
+                  ${obsCount > 0 ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.68rem;">${obsCount} obs.</span>` : ""}
+                  ${filesCount > 0 ? `<span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.68rem;"><i class="bi bi-paperclip"></i> ${filesCount} arch.</span>` : ""}
+                </div>
               </td>
-              <td style="max-width: 310px;">
-                <div class="small text-dark">${esc(req.descripcion)}</div>
-              </td>
-              <td>
-                <div class="small fw-medium">${esc(req.registro_por)}</div>
-                <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">Rol ${esc(req.perfil_registro)}</span>
+              <td class="small">
+                <div class="fw-medium">${esc(req.registro_por)}</div>
+                <span class="badge bg-light text-secondary border font-mono" style="font-size: 0.68rem;">${esc(req.perfil_registro)}</span>
               </td>
               <td>${statusBadge(req.estado_actual)}</td>
               <td>${valBadge}</td>
               <td class="text-end text-nowrap">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="jumpToSeguimiento('${esc(req.codigo)}')" title="Seguimiento y observaciones">
-                  <i class="bi bi-arrow-repeat me-1"></i>Seg. (${obsCount})
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="jumpToArchivos('${esc(req.codigo)}')" title="Archivos adjuntos">
-                  <i class="bi bi-paperclip"></i> ${filesCount}
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-success" onclick="jumpToValidacion('${esc(req.codigo)}')" title="Flujo de visto bueno, derivación y conformidad">
-                  <i class="bi bi-shield-check"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-outline-primary" title="Ver seguimiento y observaciones" onclick="goToModuleForReq('tab-seguimiento', '${esc(req.codigo)}')">
+                    <i class="bi bi-arrow-repeat"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-secondary" title="Ver archivos y vista previa" onclick="goToModuleForReq('tab-archivos', '${esc(req.codigo)}')">
+                    <i class="bi bi-paperclip"></i>
+                  </button>
+                  <button type="button" class="btn btn-outline-success" title="Ir a flujo de validación" onclick="goToModuleForReq('tab-validacion', '${esc(req.codigo)}')">
+                    <i class="bi bi-check2-all"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           `;
@@ -1760,15 +1808,30 @@
         .join("");
     }
 
+    function goToModuleForReq(tabId, codigoReq) {
+      selectedReqCode = codigoReq;
+      syncAllReqSelectors();
+      renderSeguimientoModule();
+      renderValidacionModule();
+      if (tabId === "tab-archivos") {
+        document.getElementById("filterFilesByReq").value = codigoReq;
+        document.getElementById("fileReqSelect").value = codigoReq;
+        updateObsSelectForFileUpload();
+        renderArchivosModule();
+      }
+      const tabTrigger = document.getElementById(tabId);
+      if (tabTrigger) bootstrap.Tab.getOrCreateInstance(tabTrigger).show();
+    }
+
     function resetReqFilters() {
       document.getElementById("filterReqCodigo").value = "";
       document.getElementById("filterReqEstado").value = "";
-      renderRegistroModule();
+      renderRequerimientosTable();
     }
 
     function openModalNuevoRequerimiento() {
       if (!canRegistrarReq()) {
-        notify("Acceso restringido: Solo el Área Usuaria (AU) y el Especialista (EC) pueden registrar requerimientos.", "warning");
+        notify("Su rol no dispone de permisos para registrar requerimientos.", "warning");
         return;
       }
       document.getElementById("formNuevoReq").reset();
@@ -1782,21 +1845,23 @@
       e.preventDefault();
       if (!canRegistrarReq()) return;
 
-      const errBox = document.getElementById("nuevoReqErrorBox");
       const codigo = document.getElementById("modalReqCodigo").value.trim();
-      const area = document.getElementById("modalReqArea").value;
+      const area = document.getElementById("modalReqArea").value.trim();
       const descripcion = document.getElementById("modalReqDescripcion").value.trim();
+      const errBox = document.getElementById("nuevoReqErrorBox");
 
       if (!area || !descripcion) {
-        errBox.textContent = "Complete los campos obligatorios: seleccione el área de origen e ingrese la descripción.";
+        errBox.textContent = "Debe seleccionar el Área de Origen e ingresar la Descripción de la solicitud.";
         errBox.classList.remove("d-none");
         return;
       }
       errBox.classList.add("d-none");
 
       const fecha = nowStr();
+      const newId = state.requerimientos.reduce((max, r) => Math.max(max, r.id_requerimiento || 0), 0) + 1;
+
       state.requerimientos.unshift({
-        id_requerimiento: state.requerimientos.length + 1,
+        id_requerimiento: newId,
         codigo,
         area,
         registro_por: currentUser.nombre,
@@ -1806,36 +1871,47 @@
         fecha_registro: fecha
       });
 
-      const attachedFiles = Array.from(document.getElementById("modalReqFiles").files || []);
-      attachedFiles.forEach((file) => {
-        const arcCode = nextCode("ARC-", state.archivos, "id_archivo");
-        uploadedFileBlobs.set(arcCode, file);
-        state.archivos.push({
-          id_archivo: arcCode,
-          codigo_req: codigo,
-          id_observacion: "",
-          nombre: file.name,
-          tipo_mime: file.type || "application/octet-stream",
-          tamano: formatBytes(file.size),
-          referencia: "Documento adjunto en el registro inicial del requerimiento.",
-          autor: `${currentUser.nombre} (${currentUser.perfil})`,
-          fecha
-        });
+      state.cambios_estado.push({
+        id_cambio: nextCode("CAM-", state.cambios_estado, "id_cambio"),
+        codigo_req: codigo,
+        estado_previo: "—",
+        estado_nuevo: "Registrado",
+        autor: `${currentUser.nombre} (${currentUser.perfil})`,
+        fecha
       });
+
+      const filesInput = document.getElementById("modalReqFiles");
+      if (filesInput && filesInput.files && filesInput.files.length > 0) {
+        Array.from(filesInput.files).forEach((file) => {
+          const arcId = nextCode("ARC-", state.archivos, "id_archivo");
+          uploadedFileBlobs.set(arcId, file);
+          state.archivos.unshift({
+            id_archivo: arcId,
+            codigo_req: codigo,
+            id_observacion: "",
+            nombre: file.name,
+            tipo_mime: file.type || "application/octet-stream",
+            tamano: formatBytes(file.size),
+            referencia: "Documento adjuntado al registrar el requerimiento.",
+            autor: `${currentUser.nombre} (${currentUser.perfil})`,
+            fecha
+          });
+        });
+      }
 
       selectedReqCode = codigo;
       saveState();
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalNuevoReq")).hide();
       renderAll();
-      notify(`Requerimiento ${codigo} registrado por ${currentUser.perfil}.`, "success");
+      notify(`Requerimiento ${codigo} registrado correctamente.`, "success");
     });
 
     function descargarReporteCSV() {
       const headers = [
-        "Codigo_Requerimiento",
+        "Codigo",
         "Area_Origen",
         "Registrado_Por",
-        "Rol_Registro",
+        "Perfil_Registro",
         "Estado_Actual",
         "Fecha_Registro",
         "Total_Observaciones",
@@ -1855,51 +1931,52 @@
           `"${r.estado_actual}"`,
           r.fecha_registro,
           obsCount,
-          val.vb ? `"Sí (${val.vb.fecha})"` : val.vbRechazado ? `"Rechazado (${val.vbRechazado.fecha})"` : "Pendiente",
+          val.vb
+            ? `"Sí (${val.vb.fecha})"`
+            : val.flowRestartedByRejection && val.lastRejection.tipo === "Visto bueno rechazado"
+            ? `"Reiniciado por rechazo (${val.lastRejection.fecha})"`
+            : "Pendiente",
           val.derivacion ? `"Sí (${val.derivacion.fecha})"` : "Pendiente",
-          val.conformidad ? `"Sí (${val.conformidad.fecha})"` : val.conformidadRechazada ? `"Rechazada (${val.conformidadRechazada.fecha})"` : "Pendiente"
+          val.conformidad
+            ? `"Sí (${val.conformidad.fecha})"`
+            : val.flowRestartedByRejection && val.lastRejection.tipo === "Conformidad rechazada"
+            ? `"Reiniciado por rechazo (${val.lastRejection.fecha})"`
+            : "Pendiente"
         ].join(",");
       });
 
       const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Reporte_Requerimientos_INEI_2026_${currentUser.perfil}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      notify(`Reporte descargado correctamente para el rol ${currentUser.perfil}.`, "success");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Reporte_Requerimientos_INEI_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      notify("Reporte CSV descargado correctamente.", "success");
     }
+
+    document.getElementById("filterReqCodigo").addEventListener("input", renderRequerimientosTable);
+    document.getElementById("filterReqEstado").addEventListener("change", renderRequerimientosTable);
 
     /* ==========================================================================
        MÓDULO 2: SEGUIMIENTO, OBSERVACIONES Y SUBSANACIÓN
        ========================================================================== */
-    function jumpToSeguimiento(codigo) {
-      selectedReqCode = codigo;
-      renderSeguimientoModule();
-      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-seguimiento")).show();
-    }
-
     function renderSeguimientoModule() {
       const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
-      const summaryEl = document.getElementById("segReqSummaryCard");
-      const timelineEl = document.getElementById("segTimelineContainer");
-      const obsContainer = document.getElementById("obsListContainer");
-
       if (!req) return;
 
-      summaryEl.innerHTML = `
+      document.getElementById("segReqSummaryCard").innerHTML = `
         <div class="bg-light border rounded-3 p-3">
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
             <span class="fw-bold small text-dark">${esc(req.area)}</span>
             ${statusBadge(req.estado_actual)}
           </div>
-          <p class="small text-secondary mb-1">${esc(req.descripcion)}</p>
-          <div class="text-muted" style="font-size: 0.74rem;">
-            Registrado por <strong>${esc(req.registro_por)}</strong> (${esc(req.perfil_registro)}) el ${esc(req.fecha_registro)}
+          <div class="small text-secondary">${esc(req.descripcion)}</div>
+          <div class="text-muted mt-1" style="font-size: 0.74rem;">
+            Registrado por <strong>${esc(req.registro_por)}</strong> (${esc(req.perfil_registro)}) · ${esc(req.fecha_registro)}
           </div>
         </div>
       `;
@@ -1907,156 +1984,183 @@
       document.getElementById("segEstadoPrevioInput").value = req.estado_actual;
       document.getElementById("segNuevoEstadoSelect").value = req.estado_actual;
 
-      const cambios = state.cambios_estado.filter((c) => c.codigo_req === req.codigo).reverse();
+      // Renderizar Historial de Cambios de Estado
+      const cambios = state.cambios_estado.filter((c) => c.codigo_req === req.codigo);
       document.getElementById("segHistoryCount").textContent = `${cambios.length} cambio(s)`;
+      const timelineEl = document.getElementById("segTimelineContainer");
 
       if (cambios.length === 0) {
-        timelineEl.innerHTML = `<div class="small text-muted">Aún no se han registrado cambios de estado para esta solicitud.</div>`;
+        timelineEl.innerHTML = `<div class="text-muted small">Sin cambios de estado registrados aún.</div>`;
       } else {
-        timelineEl.innerHTML = cambios
+        timelineEl.innerHTML = [...cambios]
+          .reverse()
           .map(
             (c, idx) => `
-            <div class="timeline-entry ${idx === 0 ? "latest" : ""}">
-              <span class="timeline-marker"></span>
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="code-tag" style="font-size: 0.72rem;">${esc(c.id_cambio)}</span>
-                <span class="text-muted font-mono" style="font-size: 0.73rem;">${esc(c.fecha)}</span>
+              <div class="timeline-entry ${idx === 0 ? "latest" : ""}">
+                <span class="timeline-marker"></span>
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                  <span class="code-tag" style="font-size: 0.7rem;">${esc(c.id_cambio)}</span>
+                  <span class="text-muted font-mono" style="font-size: 0.72rem;">${esc(c.fecha)}</span>
+                </div>
+                <div class="small fw-semibold text-dark">
+                  <span class="text-muted">${esc(c.estado_previo)}</span>
+                  <i class="bi bi-arrow-right mx-1 text-primary"></i>
+                  <span>${esc(c.estado_nuevo)}</span>
+                </div>
+                <div class="text-muted mt-1" style="font-size: 0.73rem;">Autor: ${esc(c.autor)}</div>
               </div>
-              <div class="small my-1">
-                <span class="text-muted text-decoration-line-through">${esc(c.estado_previo)}</span>
-                <i class="bi bi-arrow-right mx-1 text-primary"></i>
-                <strong class="text-dark">${esc(c.estado_nuevo)}</strong>
-              </div>
-              <div class="text-muted" style="font-size: 0.74rem;">
-                <i class="bi bi-person-check me-1"></i>Autor: <strong>${esc(c.autor)}</strong>
-              </div>
-            </div>
-          `
+            `
           )
           .join("");
       }
 
-      const obsList = state.observaciones.filter((o) => o.codigo_req === req.codigo).reverse();
+      // Renderizar Observaciones y Subsanaciones Vinculadas
+      const obsList = state.observaciones.filter((o) => o.codigo_req === req.codigo);
       document.getElementById("obsReqCountBadge").textContent = `${obsList.length} obs.`;
+      const obsContainer = document.getElementById("obsListContainer");
 
       if (obsList.length === 0) {
-        obsContainer.innerHTML = `<div class="text-center py-4 text-muted small">Este requerimiento no tiene observaciones registradas.</div>`;
-      } else {
-        obsContainer.innerHTML = obsList
-          .map((obs) => {
-            const subs = state.subsanaciones.filter((s) => s.id_observacion === obs.id_observacion);
-            const hasSubs = subs.length > 0;
-            return `
-              <div class="border rounded-3 p-3 bg-light">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="code-tag">${esc(obs.id_observacion)}</span>
-                    <span class="text-muted font-mono" style="font-size: 0.74rem;">${esc(obs.fecha)}</span>
-                  </div>
+        obsContainer.innerHTML = `
+          <div class="text-center py-4 bg-light rounded-3 border">
+            <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i>
+            <p class="text-muted small mb-0">No hay observaciones registradas para este requerimiento.</p>
+          </div>
+        `;
+        return;
+      }
+
+      obsContainer.innerHTML = [...obsList]
+        .reverse()
+        .map((obs) => {
+          const subs = state.subsanaciones.filter((s) => s.id_observacion === obs.id_observacion);
+          const obsFiles = state.archivos.filter((a) => a.id_observacion === obs.id_observacion);
+          const isSubsanada = subs.length > 0;
+
+          return `
+            <div class="border rounded-3 p-3 ${isSubsanada ? "bg-light border-success-subtle" : "bg-white border-danger-subtle"}">
+              <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="code-tag" style="font-size: 0.73rem;">${esc(obs.id_observacion)}</span>
                   ${
-                    hasSubs
-                      ? `<span class="badge bg-success-subtle text-success border border-success-subtle">Con subsanación (${subs.length})</span>`
-                      : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle">Pendiente de subsanación</span>`
+                    isSubsanada
+                      ? `<span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Con subsanación (${subs.length})</span>`
+                      : `<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-exclamation-circle me-1"></i>Pendiente de subsanación</span>`
                   }
                 </div>
+                <span class="text-muted font-mono" style="font-size: 0.72rem;">${esc(obs.fecha)}</span>
+              </div>
 
-                <p class="small text-dark fw-medium mb-1">${esc(obs.descripcion)}</p>
-                <div class="text-muted mb-2" style="font-size: 0.74rem;">
-                  Observado por: <strong>${esc(obs.autor)}</strong>
-                </div>
+              <p class="small text-dark fw-medium mb-1">${esc(obs.descripcion)}</p>
+              <div class="text-muted mb-2" style="font-size: 0.73rem;">Observado por: <strong>${esc(obs.autor)}</strong></div>
 
-                ${
-                  subs.length > 0
-                    ? `<div class="ms-3 ps-3 border-start border-2 border-success d-flex flex-column gap-2 my-2">
-                        ${subs
-                          .map(
-                            (s) => `
-                            <div class="bg-white border rounded-2 p-2">
-                              <div class="d-flex justify-content-between align-items-center mb-1">
-                                <span class="badge bg-success" style="font-size: 0.68rem;">${esc(s.id_subsanacion)} · Subsanación</span>
+              ${
+                obsFiles.length > 0
+                  ? `<div class="d-flex flex-wrap gap-1 mb-2">
+                      ${obsFiles
+                        .map(
+                          (f) => `
+                            <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2" style="font-size:0.72rem;" onclick="previsualizarArchivo('${esc(f.id_archivo)}')">
+                              <i class="bi bi-paperclip me-1"></i>${esc(f.nombre)}
+                            </button>
+                          `
+                        )
+                        .join("")}
+                    </div>`
+                  : ""
+              }
+
+              <!-- Subsanaciones Registradas -->
+              ${
+                subs.length > 0
+                  ? `<div class="border-start border-3 border-success ps-3 mt-2 d-flex flex-column gap-2">
+                      ${subs
+                        .map(
+                          (s) => `
+                            <div class="bg-white border rounded-2 p-2 small">
+                              <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-success" style="font-size: 0.74rem;">
+                                  <i class="bi bi-reply-fill me-1"></i>Subsanación (${esc(s.id_subsanacion)})
+                                </span>
                                 <span class="text-muted font-mono" style="font-size: 0.7rem;">${esc(s.fecha)}</span>
                               </div>
-                              <div class="small text-dark">${esc(s.respuesta)}</div>
-                              <div class="text-muted mt-1" style="font-size: 0.71rem;">Respondido por: <strong>${esc(s.autor)}</strong></div>
+                              <div class="text-dark mt-1">${esc(s.respuesta)}</div>
+                              <div class="text-muted mt-1" style="font-size: 0.71rem;">Atendido por: <strong>${esc(s.autor)}</strong></div>
                             </div>
                           `
-                          )
-                          .join("")}
-                      </div>`
-                    : ""
-                }
+                        )
+                        .join("")}
+                    </div>`
+                  : ""
+              }
 
-                ${
-                  canSubsanarObs()
-                    ? `<form class="mt-2 pt-2 border-top d-flex gap-2" onsubmit="registrarSubsanacion(event, '${esc(obs.id_observacion)}')">
-                        <input type="text" class="form-control form-control-sm" placeholder="Registrar respuesta de subsanación..." required />
-                        <button type="submit" class="btn btn-sm btn-outline-success text-nowrap fw-semibold">
-                          <i class="bi bi-reply-fill me-1"></i>Subsanar
-                        </button>
-                      </form>`
-                    : `<div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.73rem;">
-                        <i class="bi bi-lock me-1"></i>Solo Área Usuaria (AU) o Especialista (EC) pueden subsanar observaciones.
-                      </div>`
-                }
-              </div>
-            `;
-          })
-          .join("");
-      }
+              <!-- Formulario para Subsanar (AU o EC) -->
+              ${
+                canSubsanarObs()
+                  ? `<form class="mt-3 pt-2 border-top d-flex gap-2" onsubmit="registrarSubsanacion(event, '${esc(obs.id_observacion)}')">
+                      <input type="text" class="form-control form-control-sm" placeholder="Registrar respuesta o subsanación vinculada a ${esc(obs.id_observacion)}..." required />
+                      <button type="submit" class="btn btn-sm btn-success text-nowrap fw-semibold">
+                        <i class="bi bi-check2 me-1"></i>Subsanar
+                      </button>
+                    </form>`
+                  : ""
+              }
+            </div>
+          `;
+        })
+        .join("");
     }
 
     document.getElementById("segReqSelector").addEventListener("change", function (e) {
       selectedReqCode = e.target.value;
+      syncAllReqSelectors();
       renderSeguimientoModule();
+      renderValidacionModule();
     });
 
     document.getElementById("formActualizarEstado").addEventListener("submit", function (e) {
       e.preventDefault();
-      if (!canActualizarEstado()) {
-        notify("Solo el Especialista de Control de Calidad (EC) puede actualizar estados.", "warning");
-        return;
-      }
+      if (!canActualizarEstado()) return;
 
       const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
       if (!req) return;
 
-      const estadoPrevio = req.estado_actual;
-      const estadoNuevo = document.getElementById("segNuevoEstadoSelect").value;
-
-      if (estadoPrevio === estadoNuevo) {
-        notify("Seleccione un estado diferente al estado actual.", "warning");
+      const nuevoEstado = document.getElementById("segNuevoEstadoSelect").value;
+      if (nuevoEstado === req.estado_actual) {
+        notify("Seleccione un estado distinto al estado actual para registrar el cambio.", "warning");
         return;
       }
 
-      req.estado_actual = estadoNuevo;
+      const estadoPrevio = req.estado_actual;
+      req.estado_actual = nuevoEstado;
+
       state.cambios_estado.push({
         id_cambio: nextCode("CAM-", state.cambios_estado, "id_cambio"),
         codigo_req: req.codigo,
         estado_previo: estadoPrevio,
-        estado_nuevo: estadoNuevo,
+        estado_nuevo: nuevoEstado,
         autor: `${currentUser.nombre} (${currentUser.perfil})`,
         fecha: nowStr()
       });
 
       saveState();
       renderAll();
-      notify(`Estado actualizado: ${estadoPrevio} → ${estadoNuevo}.`, "success");
+      notify(`Estado de ${req.codigo} actualizado a "${nuevoEstado}".`, "success");
     });
 
     document.getElementById("formNuevaObservacion").addEventListener("submit", function (e) {
       e.preventDefault();
-      if (!canRegistrarObs()) {
-        notify("Solo el Especialista de Control de Calidad (EC) puede registrar observaciones.", "warning");
-        return;
-      }
+      if (!canRegistrarObs()) return;
+
+      const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
+      if (!req) return;
 
       const desc = document.getElementById("obsDescripcionInput").value.trim();
       if (!desc) return;
 
-      const newObsId = nextCode("OBS-", state.observaciones, "id_observacion");
+      const obsId = nextCode("OBS-", state.observaciones, "id_observacion");
       state.observaciones.push({
-        id_observacion: newObsId,
-        codigo_req: selectedReqCode,
+        id_observacion: obsId,
+        codigo_req: req.codigo,
         autor: `${currentUser.nombre} (${currentUser.perfil})`,
         descripcion: desc,
         fecha: nowStr()
@@ -2065,22 +2169,20 @@
       document.getElementById("obsDescripcionInput").value = "";
       saveState();
       renderAll();
-      notify(`Observación ${newObsId} vinculada a ${selectedReqCode}.`, "danger");
+      notify(`Observación ${obsId} vinculada al requerimiento ${req.codigo}.`, "danger");
     });
 
-    function registrarSubsanacion(event, idObservacion) {
-      event.preventDefault();
-      if (!canSubsanarObs()) {
-        notify("Su rol no está autorizado para subsanar observaciones.", "warning");
-        return;
-      }
-      const input = event.target.querySelector("input");
+    function registrarSubsanacion(e, idObservacion) {
+      e.preventDefault();
+      if (!canSubsanarObs()) return;
+
+      const input = e.target.querySelector("input");
       const respuesta = (input.value || "").trim();
       if (!respuesta) return;
 
-      const newSubId = nextCode("SUB-", state.subsanaciones, "id_subsanacion");
+      const subId = nextCode("SUB-", state.subsanaciones, "id_subsanacion");
       state.subsanaciones.push({
-        id_subsanacion: newSubId,
+        id_subsanacion: subId,
         id_observacion: idObservacion,
         autor: `${currentUser.nombre} (${currentUser.perfil})`,
         respuesta,
@@ -2089,153 +2191,242 @@
 
       saveState();
       renderAll();
-      notify(`Subsanación ${newSubId} registrada (el estado del requerimiento se mantiene sin cambios).`, "success");
+      notify(`Subsanación ${subId} registrada para la observación ${idObservacion}.`, "success");
     }
 
     /* ==========================================================================
-       MÓDULO 3: ARCHIVOS Y VISTA PREVIA
+       MÓDULO 3: ARCHIVOS, VISTA PREVIA Y DESCARGA
        ========================================================================== */
-    let pendingUploadFiles = [];
+    const dropzoneEl = document.getElementById("fileDropzone");
+    const fileInputEl = document.getElementById("fileUploadInput");
 
-    function jumpToArchivos(codigo) {
-      document.getElementById("fileReqSelect").value = codigo;
-      document.getElementById("filterFilesByReq").value = codigo;
-      updateOptionalObsDropdownForFileUpload();
-      renderArchivosModule();
-      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-archivos")).show();
-    }
-
-    function updateSelectedFilesPreview() {
-      const container = document.getElementById("selectedFilesPreview");
-      if (pendingUploadFiles.length === 0) {
-        container.innerHTML = "";
-        return;
+    dropzoneEl.addEventListener("click", () => fileInputEl.click());
+    dropzoneEl.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzoneEl.classList.add("dragover");
+    });
+    dropzoneEl.addEventListener("dragleave", () => dropzoneEl.classList.remove("dragover"));
+    dropzoneEl.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzoneEl.classList.remove("dragover");
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        addPendingUploadFiles(e.dataTransfer.files);
       }
-      container.innerHTML = pendingUploadFiles
-        .map(
-          (f, idx) => `
-          <div class="d-flex justify-content-between align-items-center bg-white border rounded px-2 py-1 small">
-            <span class="text-truncate me-2"><i class="bi bi-file-earmark-check text-success me-1"></i><strong>${esc(f.name)}</strong> (${formatBytes(f.size)})</span>
-            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removePendingFile(${idx})">
-              <i class="bi bi-x-circle"></i>
-            </button>
-          </div>
-        `
-        )
-        .join("");
+    });
+
+    fileInputEl.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        addPendingUploadFiles(e.target.files);
+      }
+    });
+
+    function addPendingUploadFiles(fileList) {
+      Array.from(fileList).forEach((f) => pendingUploadFiles.push(f));
+      renderPendingFilesPreview();
     }
 
     function removePendingFile(idx) {
       pendingUploadFiles.splice(idx, 1);
-      updateSelectedFilesPreview();
+      renderPendingFilesPreview();
     }
 
-    function renderArchivosModule() {
-      const filterReq = document.getElementById("filterFilesByReq").value;
-      const filtered = [...state.archivos].reverse().filter((a) => !filterReq || a.codigo_req === filterReq);
-
-      const container = document.getElementById("archivosListContainer");
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="text-center py-5 text-muted small">No hay archivos asociados al filtro seleccionado.</div>`;
+    function renderPendingFilesPreview() {
+      const box = document.getElementById("selectedFilesPreview");
+      if (pendingUploadFiles.length === 0) {
+        box.innerHTML = "";
         return;
       }
-
-      container.innerHTML = filtered
+      box.innerHTML = pendingUploadFiles
         .map(
-          (arc) => `
-          <div class="border rounded-3 p-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="flex-grow-1" style="min-width: 240px;">
-              <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
-                <span class="fw-bold small text-dark"><i class="bi bi-file-earmark-text text-primary me-1"></i>${esc(arc.nombre)}</span>
-                <span class="badge bg-dark font-mono">${esc(arc.codigo_req)}</span>
-                ${
-                  arc.id_observacion
-                    ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-mono">Obs: ${esc(arc.id_observacion)}</span>`
-                    : ""
-                }
-              </div>
-              <div class="small text-secondary mb-1">${esc(arc.referencia)}</div>
-              <div class="text-muted" style="font-size: 0.73rem;">
-                <span class="font-mono">${esc(arc.id_archivo)}</span> · ${esc(arc.tamano)} · Subido por <strong>${esc(arc.autor)}</strong> (${esc(arc.fecha)})
-              </div>
+          (f, i) => `
+            <div class="d-flex justify-content-between align-items-center bg-light border rounded-2 px-2 py-1 small">
+              <span class="text-truncate"><i class="bi bi-file-earmark me-1 text-primary"></i>${esc(f.name)} <span class="text-muted">(${formatBytes(f.size)})</span></span>
+              <button type="button" class="btn btn-sm text-danger p-0 ms-2" onclick="removePendingFile(${i})"><i class="bi bi-x-lg"></i></button>
             </div>
-
-            <div class="d-flex align-items-center gap-2">
-              <button type="button" class="btn btn-sm btn-outline-info text-dark fw-semibold" onclick="previsualizarArchivo('${esc(arc.id_archivo)}')" title="Vista previa antes de descargar">
-                <i class="bi bi-eye me-1"></i>Vista Previa
-              </button>
-              <button type="button" class="btn btn-sm btn-outline-primary" onclick="descargarArchivo('${esc(arc.id_archivo)}')" title="Descargar archivo">
-                <i class="bi bi-download me-1"></i>Descargar
-              </button>
-            </div>
-          </div>
-        `
+          `
         )
         .join("");
     }
 
-    function previsualizarArchivo(arcId) {
-      const arc = state.archivos.find((a) => a.id_archivo === arcId);
+    document.getElementById("fileReqSelect").addEventListener("change", updateObsSelectForFileUpload);
+    document.getElementById("filterFilesByReq").addEventListener("change", renderArchivosModule);
+
+    document.getElementById("formSubirArchivo").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const codigoReq = document.getElementById("fileReqSelect").value;
+      const idObs = document.getElementById("fileObsOptionalSelect").value || "";
+      const refText = document.getElementById("fileReferenciaInput").value.trim();
+
+      if (!codigoReq || pendingUploadFiles.length === 0) {
+        notify("Seleccione al menos un archivo para vincular al requerimiento.", "warning");
+        return;
+      }
+
+      const fecha = nowStr();
+      pendingUploadFiles.forEach((file) => {
+        const arcId = nextCode("ARC-", state.archivos, "id_archivo");
+        uploadedFileBlobs.set(arcId, file);
+        state.archivos.unshift({
+          id_archivo: arcId,
+          codigo_req: codigoReq,
+          id_observacion: idObs,
+          nombre: file.name,
+          tipo_mime: file.type || "application/octet-stream",
+          tamano: formatBytes(file.size),
+          referencia: refText || "Documento adjunto vinculado al requerimiento.",
+          autor: `${currentUser.nombre} (${currentUser.perfil})`,
+          fecha
+        });
+      });
+
+      pendingUploadFiles = [];
+      fileInputEl.value = "";
+      document.getElementById("fileReferenciaInput").value = "";
+      renderPendingFilesPreview();
+      saveState();
+      renderAll();
+      notify(`Archivo(s) vinculados correctamente a ${codigoReq}.`, "success");
+    });
+
+    function renderArchivosModule() {
+      const filterCode = document.getElementById("filterFilesByReq").value;
+      const list = state.archivos.filter((a) => !filterCode || a.codigo_req === filterCode);
+      const container = document.getElementById("archivosListContainer");
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-4 bg-light rounded-3 border">
+            <i class="bi bi-folder2 fs-2 text-muted d-block mb-1"></i>
+            <p class="text-muted small mb-0">No hay archivos asociados para el filtro seleccionado.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list
+        .map((arc) => {
+          const ext = (arc.nombre.split(".").pop() || "").toLowerCase();
+          const isCompatible = ["pdf", "png", "jpg", "jpeg", "txt", "csv"].includes(ext);
+          const iconClass =
+            ext === "pdf"
+              ? "bi-file-earmark-pdf-fill text-danger"
+              : ["png", "jpg", "jpeg"].includes(ext)
+              ? "bi-file-earmark-image-fill text-primary"
+              : ["csv", "xls", "xlsx"].includes(ext)
+              ? "bi-file-earmark-spreadsheet-fill text-success"
+              : "bi-file-earmark-text-fill text-secondary";
+
+          return `
+            <div class="border rounded-3 p-3 bg-light d-flex flex-wrap justify-content-between align-items-center gap-3">
+              <div class="d-flex align-items-start gap-3">
+                <i class="bi ${iconClass} fs-2"></i>
+                <div>
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="fw-bold small text-dark">${esc(arc.nombre)}</span>
+                    <span class="code-tag" style="font-size: 0.7rem;">${esc(arc.codigo_req)}</span>
+                    ${arc.id_observacion ? `<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.68rem;">${esc(arc.id_observacion)}</span>` : ""}
+                  </div>
+                  <div class="small text-secondary mt-1">${esc(arc.referencia)}</div>
+                  <div class="text-muted mt-1" style="font-size: 0.72rem;">
+                    Subido por <strong>${esc(arc.autor)}</strong> · ${esc(arc.fecha)} · ${esc(arc.tamano)}
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 ms-auto">
+                <button type="button" class="btn btn-sm ${isCompatible ? "btn-outline-primary" : "btn-outline-secondary"}" onclick="previsualizarArchivo('${esc(arc.id_archivo)}')">
+                  <i class="bi bi-eye me-1"></i>Vista Previa
+                </button>
+                <button type="button" class="btn btn-sm btn-inei" onclick="descargarArchivo('${esc(arc.id_archivo)}')">
+                  <i class="bi bi-download me-1"></i>Descargar
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function previsualizarArchivo(idArchivo) {
+      const arc = state.archivos.find((a) => a.id_archivo === idArchivo);
       if (!arc) return;
 
+      const ext = (arc.nombre.split(".").pop() || "").toLowerCase();
       const titleEl = document.getElementById("previewModalTitle");
       const bodyEl = document.getElementById("previewModalBody");
       const metaEl = document.getElementById("previewModalMeta");
       const dlBtn = document.getElementById("previewModalDownloadBtn");
 
-      titleEl.innerHTML = `<i class="bi bi-eye me-2"></i>Vista Previa: ${esc(arc.nombre)}`;
-      metaEl.textContent = `${arc.id_archivo} · Requerimiento: ${arc.codigo_req} · Tamaño: ${arc.tamano}`;
+      titleEl.innerHTML = `<i class="bi bi-eye me-2"></i>Vista Previa · ${esc(arc.nombre)}`;
+      metaEl.textContent = `${arc.codigo_req} · ${arc.tamano} · ${arc.fecha}`;
       dlBtn.onclick = () => descargarArchivo(arc.id_archivo);
 
-      const realBlob = uploadedFileBlobs.get(arcId);
-      const ext = (arc.nombre.split(".").pop() || "").toLowerCase();
+      const liveFile = uploadedFileBlobs.get(arc.id_archivo);
 
-      if (realBlob) {
-        const blobUrl = URL.createObjectURL(realBlob);
-        if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext)) {
-          bodyEl.innerHTML = `<div class="text-center"><img src="${blobUrl}" alt="${esc(arc.nombre)}" class="img-fluid rounded border shadow-sm" style="max-height: 440px;" /></div>`;
+      if (liveFile) {
+        if (["png", "jpg", "jpeg"].includes(ext)) {
+          const url = URL.createObjectURL(liveFile);
+          bodyEl.innerHTML = `<div class="text-center"><img src="${url}" alt="${esc(arc.nombre)}" class="img-fluid rounded border shadow-sm" style="max-height: 430px;" /></div>`;
         } else if (ext === "pdf") {
-          bodyEl.innerHTML = `<iframe src="${blobUrl}" class="w-100 rounded border" style="height: 450px;"></iframe>`;
+          const url = URL.createObjectURL(liveFile);
+          bodyEl.innerHTML = `<iframe src="${url}" class="w-100 rounded border bg-white" style="height: 440px;"></iframe>`;
         } else if (["txt", "csv"].includes(ext)) {
           const reader = new FileReader();
-          reader.onload = (ev) => {
-            bodyEl.innerHTML = `<pre class="bg-white p-3 rounded border small font-mono mb-0" style="max-height: 400px; overflow:auto;">${esc(ev.target.result)}</pre>`;
+          reader.onload = () => {
+            bodyEl.innerHTML = `<pre class="bg-white border rounded p-3 small font-mono mb-0" style="max-height: 420px; overflow:auto;">${esc(reader.result)}</pre>`;
           };
-          reader.readAsText(realBlob);
+          reader.readAsText(liveFile);
         } else {
           bodyEl.innerHTML = `
-            <div class="alert alert-warning mb-0 small">
-              <i class="bi bi-info-circle-fill me-1"></i>
-              <strong>Vista previa no disponible para formato .${esc(ext)}:</strong> El navegador no admite previsualización directa de este tipo de documento ofimático, pero puede descargarlo de forma segura con el botón inferior.
+            <div class="text-center py-4 bg-white rounded-3 border">
+              <i class="bi bi-file-earmark-lock fs-1 text-warning d-block mb-2"></i>
+              <p class="fw-semibold mb-1">Formato (.${esc(ext)}) sin vista previa directa en navegador</p>
+              <p class="small text-muted mb-0">Puede descargar el archivo íntegro mediante el botón <strong>Descargar Archivo</strong>.</p>
             </div>
           `;
         }
       } else {
-        if (["pdf", "png", "jpg", "jpeg", "csv", "txt"].includes(ext)) {
+        // Vista previa demostrativa para archivos precargados en el repositorio
+        if (ext === "pdf") {
           bodyEl.innerHTML = `
             <div class="bg-white border rounded-3 p-4 shadow-sm">
-              <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-                <div>
-                  <span class="badge bg-primary mb-1">DOCUMENTO COMPATIBLE · VISTA PREVIA</span>
-                  <h6 class="fw-bold mb-0">${esc(arc.nombre)}</h6>
-                </div>
+              <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                <span class="fw-bold text-primary">INSTITUTO NACIONAL DE ESTADÍSTICA E INFORMÁTICA · INEI</span>
                 <span class="code-tag">${esc(arc.codigo_req)}</span>
               </div>
-              <p class="small text-secondary mb-2"><strong>Referencia registrada:</strong> ${esc(arc.referencia)}</p>
-              <p class="small text-secondary mb-3"><strong>Autor de carga:</strong> ${esc(arc.autor)} · <strong>Fecha:</strong> ${esc(arc.fecha)}</p>
-              <div class="p-3 rounded bg-light border font-mono small text-dark">
-                [VISTA PREVIA DEL CONTENIDO DEL DOCUMENTO INSTITUCIONAL INEI]<br/>
-                Proyecto: Evaluación Docente para el Ascenso 2026<br/>
-                Solicitud vinculada: ${esc(arc.codigo_req)} ${arc.id_observacion ? `| Observación: ${esc(arc.id_observacion)}` : ""}<br/>
-                Estado de integridad: Verificado y autorizado para rol ${esc(currentUser.perfil)}.
+              <h6 class="fw-bold mb-2">${esc(arc.nombre)}</h6>
+              <p class="small text-secondary">${esc(arc.referencia)}</p>
+              <div class="bg-light border rounded p-3 small">
+                <strong>Resumen del documento validado:</strong><br/>
+                • Alcance funcional: Consulta nominal de docentes por región, UGEL y local de evaluación.<br/>
+                • Criterios de búsqueda: DNI, apellidos y nombres, código de local.<br/>
+                • Exportación autorizada: Formato delimitado para verificación operativa.
               </div>
             </div>
           `;
+        } else if (["png", "jpg", "jpeg"].includes(ext)) {
+          bodyEl.innerHTML = `
+            <div class="bg-white border rounded-3 p-4 text-center">
+              <div class="border border-danger-subtle bg-danger-subtle rounded-3 p-4 mx-auto" style="max-width: 520px;">
+                <i class="bi bi-phone-vibrate fs-1 text-danger d-block mb-2"></i>
+                <div class="fw-bold text-dark">Captura de Evidencia Funcional · ${esc(arc.id_observacion || arc.codigo_req)}</div>
+                <p class="small text-secondary mt-2 mb-0">${esc(arc.referencia)}</p>
+              </div>
+            </div>
+          `;
+        } else if (["csv", "txt"].includes(ext)) {
+          bodyEl.innerHTML = `
+            <pre class="bg-white border rounded p-3 small font-mono mb-0">codigo_incidencia;categoria;nivel_prioridad;estado_validacion
+INC-01;Apertura tardía de local;Alta;Validado
+INC-02;Falta de aplicador suplente;Media;Validado
+INC-03;Falla de conectividad en sede;Alta;Validado</pre>
+          `;
         } else {
           bodyEl.innerHTML = `
-            <div class="alert alert-warning mb-0 small">
-              <i class="bi bi-info-circle-fill me-1"></i>
-              <strong>Formato sin vista previa directa (.${esc(ext)}):</strong> Se conserva habilitada la descarga autorizada para su rol.
+            <div class="text-center py-4 bg-white rounded-3 border">
+              <i class="bi bi-file-earmark-text fs-1 text-secondary d-block mb-2"></i>
+              <p class="fw-semibold mb-1">El formato (.${esc(ext)}) no admite previsualización directa</p>
+              <p class="small text-muted mb-0">La descarga del documento permanece habilitada para su perfil.</p>
             </div>
           `;
         }
@@ -2244,87 +2435,41 @@
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalPreviewArchivo")).show();
     }
 
-    function descargarArchivo(arcId) {
-      const arc = state.archivos.find((a) => a.id_archivo === arcId);
+    function descargarArchivo(idArchivo) {
+      const arc = state.archivos.find((a) => a.id_archivo === idArchivo);
       if (!arc) return;
 
-      const realBlob = uploadedFileBlobs.get(arcId);
-      let blob;
-      if (realBlob) {
-        blob = realBlob;
-      } else {
-        const ficha = [
-          "SGR-INEI - DOCUMENTO ASOCIADO A REQUERIMIENTO",
-          "============================================",
-          `ID Archivo      : ${arc.id_archivo}`,
-          `Requerimiento   : ${arc.codigo_req}`,
-          `Observación     : ${arc.id_observacion || "Ninguna"}`,
-          `Nombre Archivo  : ${arc.nombre}`,
-          `Referencia      : ${arc.referencia}`,
-          `Subido Por      : ${arc.autor}`,
-          `Fecha           : ${arc.fecha}`
-        ].join("\n");
-        blob = new Blob([ficha], { type: "text/plain;charset=utf-8;" });
-      }
+      const liveFile = uploadedFileBlobs.get(arc.id_archivo);
+      const blob =
+        liveFile ||
+        new Blob(
+          [
+            `SGR-INEI - Archivo Vinculado\n` +
+              `ID Archivo: ${arc.id_archivo}\n` +
+              `Requerimiento: ${arc.codigo_req}\n` +
+              `Nombre: ${arc.nombre}\n` +
+              `Referencia: ${arc.referencia}\n` +
+              `Autor: ${arc.autor}\n` +
+              `Fecha: ${arc.fecha}\n`
+          ],
+          { type: "text/plain;charset=utf-8" }
+        );
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = realBlob ? arc.nombre : `${arc.nombre}.txt`;
+      a.download = arc.nombre;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      URL.revokeObjectURL(url);
       notify(`Descargando "${arc.nombre}"...`, "primary");
     }
 
-    document.getElementById("formSubirArchivo").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (pendingUploadFiles.length === 0) {
-        notify("Seleccione o arrastre al menos un archivo.", "warning");
-        return;
-      }
-
-      const codigoReq = document.getElementById("fileReqSelect").value;
-      const idObs = document.getElementById("fileObsOptionalSelect").value;
-      const refText = document.getElementById("fileReferenciaInput").value.trim();
-      const fecha = nowStr();
-
-      pendingUploadFiles.forEach((file) => {
-        const arcCode = nextCode("ARC-", state.archivos, "id_archivo");
-        uploadedFileBlobs.set(arcCode, file);
-        state.archivos.push({
-          id_archivo: arcCode,
-          codigo_req: codigoReq,
-          id_observacion: idObs,
-          nombre: file.name,
-          tipo_mime: file.type || "application/octet-stream",
-          tamano: formatBytes(file.size),
-          referencia: refText || `Archivo asociado a ${codigoReq}`,
-          autor: `${currentUser.nombre} (${currentUser.perfil})`,
-          fecha
-        });
-      });
-
-      const count = pendingUploadFiles.length;
-      pendingUploadFiles = [];
-      document.getElementById("fileUploadInput").value = "";
-      document.getElementById("fileReferenciaInput").value = "";
-      updateSelectedFilesPreview();
-      saveState();
-      renderAll();
-      notify(`${count} archivo(s) vinculado(s) a ${codigoReq}.`, "success");
-    });
-
     /* ==========================================================================
-       MÓDULO 4: FLUJO DE VALIDACIÓN (VISTO BUENO -> DERIVACIÓN -> CONFORMIDAD)
+       MÓDULO 4: VALIDACIÓN SECUENCIAL (VISTO BUENO -> DERIVACIÓN -> CONFORMIDAD)
+       CON REINICIO AUTOMÁTICO ANTE RECHAZO
        ========================================================================== */
-    function jumpToValidacion(codigo) {
-      selectedReqCode = codigo;
-      renderValidacionModule();
-      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-validacion")).show();
-    }
-
     function renderValidacionModule() {
       const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
       if (!req) return;
@@ -2339,16 +2484,39 @@
         </div>
       `;
 
-      const { vb, vbRechazado, derivacion, conformidad, conformidadRechazada, historial } = getValidationStateForReq(req.codigo);
+      const {
+        vb,
+        derivacion,
+        conformidad,
+        lastRejection,
+        flowRestartedByRejection,
+        historial
+      } = getValidationStateForReq(req.codigo);
       const container = document.getElementById("validationChainContainer");
 
+      // Aviso cuando el flujo se reinició por un rechazo previo
+      const restartAlertHtml = flowRestartedByRejection
+        ? `
+          <div class="col-12">
+            <div class="alert alert-danger border-danger-subtle mb-0 d-flex flex-wrap align-items-start gap-2 small">
+              <i class="bi bi-arrow-counterclockwise fs-5 text-danger"></i>
+              <div>
+                <div class="fw-bold">
+                  Flujo de validación reiniciado por ${esc(lastRejection.tipo)} (${esc(lastRejection.id_evento)})
+                </div>
+                <div class="mt-1"><strong>Motivo registrado:</strong> ${esc(lastRejection.motivo || "Sin detalle")}</div>
+                <div class="text-muted mt-1" style="font-size: 0.76rem;">
+                  Registrado por <strong>${esc(lastRejection.autor)}</strong> el ${esc(lastRejection.fecha)}. El proceso vuelve al <strong>Paso 1 (Visto Bueno del Área Usuaria)</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+        `
+        : "";
+
       // Paso 1: Visto Bueno (AU) — Aprobar o Rechazar
-      const step1CardClass = vb ? "completed" : vbRechazado ? "rejected" : "active-turn";
-      const step1CircleClass = vb
-        ? "bg-success text-white"
-        : vbRechazado
-        ? "bg-danger text-white"
-        : "bg-primary text-white";
+      const step1CardClass = vb ? "completed" : "active-turn";
+      const step1CircleClass = vb ? "bg-success text-white" : "bg-primary text-white";
 
       const step1Html = `
         <div class="col-12 col-lg-4">
@@ -2369,19 +2537,9 @@
                     <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(vb.fecha)}</div>
                   </div>`
                 : `
-                  ${
-                    vbRechazado
-                      ? `<div class="bg-white border border-danger-subtle rounded-2 p-2 small mb-3">
-                          <div class="text-danger fw-bold"><i class="bi bi-x-octagon-fill me-1"></i>Visto Bueno Rechazado (${esc(vbRechazado.id_evento)})</div>
-                          <div class="text-dark mt-1"><strong>Motivo:</strong> ${esc(vbRechazado.motivo || "Sin detalle")}</div>
-                          <div class="text-muted mt-1">Autor: <strong>${esc(vbRechazado.autor)}</strong></div>
-                          <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(vbRechazado.fecha)}</div>
-                        </div>`
-                      : ""
-                  }
                   <div class="d-flex flex-column gap-2">
                     <button type="button" class="btn btn-sm btn-info text-dark fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="ejecutarVistoBueno('${esc(req.codigo)}')">
-                      <i class="bi bi-hand-thumbs-up-fill me-1"></i>${vbRechazado ? "Aprobar Visto Bueno (AU)" : "Dar Visto Bueno (AU)"}
+                      <i class="bi bi-hand-thumbs-up-fill me-1"></i>Dar Visto Bueno (AU)
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="abrirModalRechazo('VB', '${esc(req.codigo)}', '')">
                       <i class="bi bi-x-circle me-1"></i>Rechazar Visto Bueno (AU)
@@ -2415,13 +2573,9 @@
                     <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(derivacion.fecha)}</div>
                   </div>`
                 : !vb
-                ? `<div class="alert ${vbRechazado ? "alert-danger" : "alert-light border"} small mb-0">
-                    <i class="bi ${vbRechazado ? "bi-exclamation-octagon" : "bi-hourglass-split"} me-1"></i>
-                    ${
-                      vbRechazado
-                        ? "Bloqueado: El Visto Bueno fue rechazado por el Área Usuaria."
-                        : "Bloqueado: Requiere Visto Bueno aprobado del Área Usuaria."
-                    }
+                ? `<div class="alert alert-light border small text-muted mb-0">
+                    <i class="bi bi-hourglass-split me-1"></i>
+                    Bloqueado: Requiere Visto Bueno aprobado del Área Usuaria.
                   </div>`
                 : `<div class="d-grid">
                     <button type="button" class="btn btn-sm btn-primary fw-semibold" ${!canDerivarVistoBueno() ? "disabled" : ""} onclick="ejecutarDerivacionVB('${esc(req.codigo)}', '${esc(vb.id_evento)}')">
@@ -2435,17 +2589,9 @@
       `;
 
       // Paso 3: Conformidad del Requerimiento (RP) — Aprobar o Rechazar
-      const step3CardClass = conformidad
-        ? "completed"
-        : conformidadRechazada
-        ? "rejected"
-        : derivacion
-        ? "active-turn"
-        : "";
+      const step3CardClass = conformidad ? "completed" : derivacion ? "active-turn" : "";
       const step3CircleClass = conformidad
         ? "bg-success text-white"
-        : conformidadRechazada
-        ? "bg-danger text-white"
         : derivacion
         ? "bg-success text-white"
         : "bg-secondary-subtle text-secondary";
@@ -2474,19 +2620,9 @@
                     <i class="bi bi-hourglass-split me-1"></i>Bloqueado: Requiere que el Especialista (EC) derive el Visto Bueno.
                   </div>`
                 : `
-                  ${
-                    conformidadRechazada
-                      ? `<div class="bg-white border border-danger-subtle rounded-2 p-2 small mb-3">
-                          <div class="text-danger fw-bold"><i class="bi bi-x-octagon-fill me-1"></i>Conformidad Rechazada (${esc(conformidadRechazada.id_evento)})</div>
-                          <div class="text-dark mt-1"><strong>Motivo:</strong> ${esc(conformidadRechazada.motivo || "Sin detalle")}</div>
-                          <div class="text-muted mt-1">Autor: <strong>${esc(conformidadRechazada.autor)}</strong></div>
-                          <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(conformidadRechazada.fecha)}</div>
-                        </div>`
-                      : ""
-                  }
                   <div class="d-flex flex-column gap-2">
                     <button type="button" class="btn btn-sm btn-success fw-semibold" ${!canDarConformidad() ? "disabled" : ""} onclick="ejecutarConformidad('${esc(req.codigo)}', '${esc(derivacion.id_evento)}')">
-                      <i class="bi bi-patch-check-fill me-1"></i>${conformidadRechazada ? "Aprobar Conformidad Final (RP)" : "Dar Conformidad Final (RP)"}
+                      <i class="bi bi-patch-check-fill me-1"></i>Dar Conformidad Final (RP)
                     </button>
                     <button type="button" class="btn btn-sm btn-outline-danger fw-semibold" ${!canDarConformidad() ? "disabled" : ""} onclick="abrirModalRechazo('CONFORMIDAD', '${esc(req.codigo)}', '${esc(derivacion.id_evento)}')">
                       <i class="bi bi-x-circle me-1"></i>Rechazar Conformidad (RP)
@@ -2499,7 +2635,7 @@
         </div>
       `;
 
-      container.innerHTML = step1Html + step2Html + step3Html;
+      container.innerHTML = restartAlertHtml + step1Html + step2Html + step3Html;
 
       // Renderizar Historial de Decisiones de Validación
       const histCountEl = document.getElementById("valHistoryCount");
@@ -2509,38 +2645,43 @@
       if (historial.length === 0) {
         histContainer.innerHTML = `<div class="text-muted small">Aún no se han registrado eventos de visto bueno, derivación o conformidad para este requerimiento.</div>`;
       } else {
-        histContainer.innerHTML = `<div class="d-flex flex-column gap-2">` + [...historial]
-          .reverse()
-          .map((ev) => {
-            const isRejected = ev.tipo.toLowerCase().includes("rechazad");
-            const badgeClass = isRejected
-              ? "bg-danger"
-              : ev.tipo === "Conformidad"
-              ? "bg-success"
-              : ev.tipo === "Derivación del visto bueno"
-              ? "bg-primary"
-              : "bg-info text-dark";
-            return `
-              <div class="border rounded-3 p-2 px-3 ${isRejected ? "bg-danger-subtle border-danger-subtle" : "bg-light"}">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                  <div class="d-flex align-items-center gap-2">
-                    <span class="code-tag" style="font-size: 0.72rem;">${esc(ev.id_evento)}</span>
-                    <span class="badge ${badgeClass}">${esc(ev.tipo)}</span>
-                    ${ev.id_evento_previo ? `<span class="text-muted font-mono" style="font-size: 0.72rem;">Ref: ${esc(ev.id_evento_previo)}</span>` : ""}
+        histContainer.innerHTML =
+          `<div class="d-flex flex-column gap-2">` +
+          [...historial]
+            .reverse()
+            .map((ev) => {
+              const isRejected = ev.tipo.toLowerCase().includes("rechazad");
+              const badgeClass = isRejected
+                ? "bg-danger"
+                : ev.tipo === "Conformidad"
+                ? "bg-success"
+                : ev.tipo === "Derivación del visto bueno"
+                ? "bg-primary"
+                : "bg-info text-dark";
+              return `
+                <div class="border rounded-3 p-2 px-3 ${isRejected ? "bg-danger-subtle border-danger-subtle" : "bg-light"}">
+                  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="code-tag" style="font-size: 0.72rem;">${esc(ev.id_evento)}</span>
+                      <span class="badge ${badgeClass}">${esc(ev.tipo)}</span>
+                      ${ev.id_evento_previo ? `<span class="text-muted font-mono" style="font-size: 0.72rem;">Ref: ${esc(ev.id_evento_previo)}</span>` : ""}
+                    </div>
+                    <span class="text-muted font-mono" style="font-size: 0.73rem;">${esc(ev.fecha)}</span>
                   </div>
-                  <span class="text-muted font-mono" style="font-size: 0.73rem;">${esc(ev.fecha)}</span>
+                  ${ev.motivo ? `<div class="small text-dark mt-1"><strong>Motivo del rechazo:</strong> ${esc(ev.motivo)}</div>` : ""}
+                  <div class="text-muted mt-1" style="font-size: 0.74rem;">Registrado por: <strong>${esc(ev.autor)}</strong></div>
                 </div>
-                ${ev.motivo ? `<div class="small text-dark mt-1"><strong>Motivo del rechazo:</strong> ${esc(ev.motivo)}</div>` : ""}
-                <div class="text-muted mt-1" style="font-size: 0.74rem;">Registrado por: <strong>${esc(ev.autor)}</strong></div>
-              </div>
-            `;
-          })
-          .join("") + `</div>`;
+              `;
+            })
+            .join("") +
+          `</div>`;
       }
     }
 
     document.getElementById("valReqSelector").addEventListener("change", function (e) {
       selectedReqCode = e.target.value;
+      syncAllReqSelectors();
+      renderSeguimientoModule();
       renderValidacionModule();
     });
 
@@ -2554,14 +2695,18 @@
       document.getElementById("rechazoCodigoReqInput").value = codigoReq;
       document.getElementById("rechazoEventoPrevioInput").value = idEventoPrevio || "";
 
-      const titulo = tipo === "VB"
-        ? "Rechazar Visto Bueno (Área Usuaria)"
-        : "Rechazar Conformidad (Responsable del Proyecto)";
+      const titulo =
+        tipo === "VB"
+          ? "Rechazar Visto Bueno (Área Usuaria)"
+          : "Rechazar Conformidad (Responsable del Proyecto)";
       document.getElementById("modalRechazoTitle").innerHTML = `<i class="bi bi-x-octagon-fill me-2"></i>${titulo}`;
 
       document.getElementById("rechazoResumenBox").innerHTML = `
         <div><strong>Requerimiento:</strong> <span class="code-tag">${esc(codigoReq)}</span></div>
         <div class="mt-1"><strong>Responsable que rechaza:</strong> ${esc(currentUser.nombre)} (${esc(currentUser.perfil)})</div>
+        <div class="text-danger mt-2" style="font-size: 0.78rem;">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>Al confirmar el rechazo, el flujo de validación se reiniciará desde el <strong>Paso 1 (Visto Bueno del Área Usuaria)</strong>.
+        </div>
       `;
 
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalRechazoValidacion")).show();
@@ -2601,129 +2746,121 @@
       saveState();
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalRechazoValidacion")).hide();
       renderAll();
-      notify(`${tipoEvento} (${newValId}) registrado con su motivo.`, "danger");
+      notify(`${tipoEvento} (${newValId}): el flujo de validación se ha reiniciado al Paso 1 (Visto Bueno AU).`, "danger");
     });
 
     function ejecutarVistoBueno(codigoReq) {
       if (!canDarVistoBueno()) return;
+      const val = getValidationStateForReq(codigoReq);
+      if (val.vb) return;
+
       const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
       state.eventos_validacion.push({
         id_evento: newValId,
         codigo_req: codigoReq,
         id_evento_previo: null,
         tipo: "Visto bueno",
-        autor: `${currentUser.nombre} (AU)`,
+        autor: `${currentUser.nombre} (${currentUser.perfil})`,
         fecha: nowStr()
       });
+
       saveState();
       renderAll();
-      notify(`Visto bueno (${newValId}) registrado por el Área Usuaria.`, "success");
+      notify(`Visto bueno (${newValId}) registrado para ${codigoReq}.`, "success");
     }
 
-    function ejecutarDerivacionVB(codigoReq, idEventoPrevio) {
+    function ejecutarDerivacionVB(codigoReq, idVb) {
       if (!canDerivarVistoBueno()) return;
+      const val = getValidationStateForReq(codigoReq);
+      if (!val.vb || val.derivacion) return;
+
       const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
       state.eventos_validacion.push({
         id_evento: newValId,
         codigo_req: codigoReq,
-        id_evento_previo: idEventoPrevio,
+        id_evento_previo: idVb,
         tipo: "Derivación del visto bueno",
-        autor: `${currentUser.nombre} (EC)`,
+        autor: `${currentUser.nombre} (${currentUser.perfil})`,
         fecha: nowStr()
       });
+
       saveState();
       renderAll();
-      notify(`Visto bueno derivado al Responsable del Proyecto (${newValId}).`, "primary");
+      notify(`Visto bueno derivado (${newValId}) al Responsable del Proyecto.`, "primary");
     }
 
-    function ejecutarConformidad(codigoReq, idEventoPrevio) {
+    function ejecutarConformidad(codigoReq, idDerivacion) {
       if (!canDarConformidad()) return;
+      const val = getValidationStateForReq(codigoReq);
+      if (!val.derivacion || val.conformidad) return;
+
+      const fecha = nowStr();
       const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
       state.eventos_validacion.push({
         id_evento: newValId,
         codigo_req: codigoReq,
-        id_evento_previo: idEventoPrevio,
+        id_evento_previo: idDerivacion,
         tipo: "Conformidad",
-        autor: `${currentUser.nombre} (RP)`,
-        fecha: nowStr()
+        autor: `${currentUser.nombre} (${currentUser.perfil})`,
+        fecha
       });
+
+      const req = state.requerimientos.find((r) => r.codigo === codigoReq);
+      if (req && req.estado_actual !== "Con conformidad") {
+        const prev = req.estado_actual;
+        req.estado_actual = "Con conformidad";
+        state.cambios_estado.push({
+          id_cambio: nextCode("CAM-", state.cambios_estado, "id_cambio"),
+          codigo_req: codigoReq,
+          estado_previo: prev,
+          estado_nuevo: "Con conformidad",
+          autor: `${currentUser.nombre} (${currentUser.perfil})`,
+          fecha
+        });
+      }
+
       saveState();
       renderAll();
-      notify(`Conformidad del requerimiento registrada (${newValId}).`, "success");
+      notify(`Conformidad final (${newValId}) emitida para ${codigoReq}.`, "success");
     }
 
     /* ==========================================================================
-       INICIALIZACIÓN GLOBAL
+       EVENTOS DE AUTENTICACIÓN Y ARRANQUE DE LA APLICACIÓN
        ========================================================================== */
-    function renderAll() {
-      refreshDynamicReqSelects();
-      renderKpis();
-      renderRegistroModule();
-      renderSeguimientoModule();
-      renderArchivosModule();
-      renderValidacionModule();
-      applyRolePermissions();
-    }
+    document.getElementById("formLogin").addEventListener("submit", function (e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmailInput").value;
+      const pass = document.getElementById("loginPassInput").value;
+      loginWithCredentials(email, pass);
+    });
 
-    window.addEventListener("DOMContentLoaded", () => {
-      initSelects();
-
-      document.getElementById("formLogin").addEventListener("submit", (e) => {
-        e.preventDefault();
-        loginWithCredentials(
-          document.getElementById("loginEmailInput").value,
-          document.getElementById("loginPassInput").value
-        );
-      });
-
-      document.getElementById("togglePassBtn").addEventListener("click", () => {
-        const inp = document.getElementById("loginPassInput");
-        const icon = document.querySelector("#togglePassBtn i");
-        if (inp.type === "password") {
-          inp.type = "text";
-          icon.className = "bi bi-eye-slash";
-        } else {
-          inp.type = "password";
-          icon.className = "bi bi-eye";
-        }
-      });
-
-      document.getElementById("quickProfileSwitcher").addEventListener("change", (e) => {
-        quickLogin(e.target.value);
-      });
-
-      document.getElementById("filterReqCodigo").addEventListener("input", renderRegistroModule);
-      document.getElementById("filterReqEstado").addEventListener("change", renderRegistroModule);
-
-      document.getElementById("fileReqSelect").addEventListener("change", updateOptionalObsDropdownForFileUpload);
-      document.getElementById("filterFilesByReq").addEventListener("change", renderArchivosModule);
-
-      const dropzone = document.getElementById("fileDropzone");
-      const fileInput = document.getElementById("fileUploadInput");
-      dropzone.addEventListener("click", () => fileInput.click());
-      fileInput.addEventListener("change", (e) => {
-        pendingUploadFiles = pendingUploadFiles.concat(Array.from(e.target.files || []));
-        updateSelectedFilesPreview();
-      });
-      dropzone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        dropzone.classList.add("dragover");
-      });
-      dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
-      dropzone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        dropzone.classList.remove("dragover");
-        if (e.dataTransfer?.files?.length) {
-          pendingUploadFiles = pendingUploadFiles.concat(Array.from(e.dataTransfer.files));
-          updateSelectedFilesPreview();
-        }
-      });
-
-      if (currentUser) {
-        showAppScreen();
-        renderAll();
+    document.getElementById("togglePassBtn").addEventListener("click", function () {
+      const passInput = document.getElementById("loginPassInput");
+      const icon = this.querySelector("i");
+      if (passInput.type === "password") {
+        passInput.type = "text";
+        icon.className = "bi bi-eye-slash";
+      } else {
+        passInput.type = "password";
+        icon.className = "bi bi-eye";
       }
     });
+
+    document.getElementById("quickProfileSwitcher").addEventListener("change", function (e) {
+      const found = USUARIOS_SISTEMA.find((u) => u.email === e.target.value);
+      if (!found) return;
+      currentUser = found;
+      saveAuthSession(found);
+      renderAll();
+      notify(`Perfil cambiado a ${found.perfilNombre}.`, "primary");
+    });
+
+    // Inicialización al cargar el documento
+    initCatalogsAndSelectors();
+    if (currentUser) {
+      showAppScreen();
+      renderAll();
+    }
   </script>
 </body>
 </html>
