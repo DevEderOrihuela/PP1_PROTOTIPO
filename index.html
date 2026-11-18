@@ -74,7 +74,7 @@
     .kpi-box.kpi-warning { border-left-color: #D97706; }
     .kpi-box.kpi-success { border-left-color: #16A34A; }
 
-    /* Pestañas de Módulos Funcionales (Fig. 12 del Informe) */
+    /* Pestañas de Módulos Funcionales */
     .nav-modules {
       background: var(--inei-surface);
       border: 1px solid var(--inei-border);
@@ -167,7 +167,7 @@
       background-color: #F8FBFF;
     }
 
-    /* Línea de tiempo de Cambio de Estado (CAMBIO_ESTADO) */
+    /* Línea de tiempo de Cambio de Estado */
     .timeline-list {
       position: relative;
       padding-left: 1.65rem;
@@ -205,7 +205,7 @@
       box-shadow: 0 0 0 2px #16A34A;
     }
 
-    /* Tarjetas del Flujo de Validación de 3 Actos (HU-08, HU-09, HU-10) */
+    /* Tarjetas del Flujo de Validación en 3 Etapas */
     .validation-step-card {
       border: 1.5px solid var(--inei-border);
       border-radius: 12px;
@@ -306,7 +306,7 @@
 <body>
 
   <!-- ========================================================================
-       PANTALLA DE INICIO DE SESIÓN POR PERFIL (TABLA X · RN-02)
+       PANTALLA DE INICIO DE SESIÓN POR ROL
        ======================================================================== -->
   <section id="loginScreen" class="login-backdrop">
     <div class="login-card">
@@ -316,7 +316,7 @@
             <i class="bi bi-shield-lock-fill"></i>
           </div>
           <div>
-            <span class="badge bg-light text-dark fw-bold mb-1" style="font-size: 0.68rem;">INEI · CONTROL DE ACCESO POR PERFIL</span>
+            <span class="badge bg-light text-dark fw-bold mb-1" style="font-size: 0.68rem;">INEI · CONTROL DE ACCESO POR ROL</span>
             <h1 class="h5 fw-bold mb-0">SGR-INEI · Inicio de Sesión</h1>
           </div>
         </div>
@@ -358,13 +358,13 @@
         <div class="border-top pt-3 mt-2">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <span class="small fw-bold text-muted text-uppercase" style="font-size: 0.71rem;">
-              <i class="bi bi-people-fill me-1 text-primary"></i>Acceso Rápido — Perfiles del Sistema
+              <i class="bi bi-people-fill me-1 text-primary"></i>Acceso Rápido — Roles del Sistema
             </span>
             <span class="badge bg-light text-secondary border font-mono" style="font-size: 0.68rem;">Clave: inei2026</span>
           </div>
 
           <div class="d-flex flex-column gap-2">
-            <!-- Perfil 1: AU -->
+            <!-- Rol 1: Área Usuaria (AU) -->
             <button type="button" class="quick-role-btn w-100" onclick="quickLogin('areausuaria@inei.gob.pe')">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="fw-semibold small text-dark">Coord. Dirección Nacional Evaluación</span>
@@ -373,7 +373,7 @@
               <div class="text-muted" style="font-size: 0.72rem;">Registra requerimientos, subsana observaciones y otorga Visto Bueno</div>
             </button>
 
-            <!-- Perfil 2: EC -->
+            <!-- Rol 2: Especialista de Control de Calidad (EC) -->
             <button type="button" class="quick-role-btn w-100" onclick="quickLogin('eorihuela@inei.gob.pe')">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="fw-semibold small text-dark">Eder Paulo Orihuela Espejo</span>
@@ -382,7 +382,7 @@
               <div class="text-muted" style="font-size: 0.72rem;">Registra, actualiza estado, observa, subsana y deriva Visto Bueno</div>
             </button>
 
-            <!-- Perfil 3: RP -->
+            <!-- Rol 3: Responsable del Proyecto (RP) -->
             <button type="button" class="quick-role-btn w-100" onclick="quickLogin('lhiguchi@inei.gob.pe')">
               <div class="d-flex justify-content-between align-items-center">
                 <span class="fw-semibold small text-dark">Ing. Luis Alberto Higuchi</span>
@@ -392,33 +392,12 @@
             </button>
           </div>
         </div>
-            <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalMatrizPermisos" title="Ver Permisos por Rol">
-              <i class="bi bi-shield-check me-1"></i>Permisos por Rol
-            </button>
-
-            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalResetDemo" title="Restaurar registros de ejemplo">
-              <i class="bi bi-arrow-counterclockwise"></i>
-            </button>
-
-            <button type="button" class="btn btn-sm btn-danger fw-semibold" onclick="logoutUser()" title="Cerrar sesión">
-              <i class="bi bi-box-arrow-right me-1"></i>Salir
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Cinta informativa de alcance del perfil actual -->
-    <div id="roleContextBanner" class="bg-primary-subtle border-bottom border-primary-subtle text-dark py-2 px-3 px-lg-4 small">
-      <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span id="roleContextText"></span>
-        <span class="badge bg-dark font-mono">OTIN: Desarrollo externo sin acceso directo</span>
       </div>
     </div>
   </section>
 
   <!-- ========================================================================
-       APLICACIÓN PRINCIPAL (PROTEGIDA POR PERFIL)
+       APLICACIÓN PRINCIPAL (PROTEGIDA POR ROL)
        ======================================================================== -->
   <div id="appWrapper" class="d-none">
 
@@ -442,11 +421,11 @@
           </div>
 
           <div class="d-flex flex-wrap align-items-center gap-2">
-            <!-- Selector rápido de perfil para demostración en vivo -->
+            <!-- Selector rápido de rol para pruebas -->
             <div class="bg-white bg-opacity-10 border border-white border-opacity-25 rounded-3 px-2 py-1 d-flex align-items-center gap-2">
               <i class="bi bi-person-badge fs-5 text-white"></i>
               <div class="lh-sm">
-                <div class="text-white-50" style="font-size: 0.67rem;">Perfil Activo (Cambiar rol):</div>
+                <div class="text-white-50" style="font-size: 0.67rem;">Rol Activo (Cambiar usuario):</div>
                 <select id="quickProfileSwitcher" class="form-select form-select-sm bg-transparent text-white border-0 p-0 fw-semibold" style="font-size: 0.78rem; box-shadow: none;">
                   <option value="areausuaria@inei.gob.pe" class="text-dark">AU · Área Usuaria (Coord. Evaluación)</option>
                   <option value="eorihuela@inei.gob.pe" class="text-dark">EC · Especialista Calidad (Eder Orihuela)</option>
@@ -455,11 +434,11 @@
               </div>
             </div>
 
-            <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalMatrizPermisos" title="Ver Matriz de Permisos por Perfil (Tabla X)">
-              <i class="bi bi-table me-1"></i>Matriz Tabla X
+            <button type="button" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalMatrizPermisos" title="Ver permisos por rol">
+              <i class="bi bi-shield-check me-1"></i>Permisos por Rol
             </button>
 
-            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalResetDemo" title="Restaurar registros de ejemplo">
+            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalResetDemo" title="Restaurar registros iniciales">
               <i class="bi bi-arrow-counterclockwise"></i>
             </button>
 
@@ -471,11 +450,11 @@
       </div>
     </header>
 
-    <!-- Cinta informativa de alcance del perfil actual -->
+    <!-- Cinta informativa de funcionalidades habilitadas para el rol activo -->
     <div id="roleContextBanner" class="bg-primary-subtle border-bottom border-primary-subtle text-dark py-2 px-3 px-lg-4 small">
       <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
         <span id="roleContextText"></span>
-        <span class="badge bg-dark font-mono">OTIN: Desarrollo externo sin acceso al sistema (RN-09)</span>
+        <span class="badge bg-dark font-mono">OTIN: Desarrollo externo sin acceso directo</span>
       </div>
     </div>
 
@@ -485,7 +464,7 @@
       <!-- Indicadores Resumen (KPIs) -->
       <div class="row g-3 mb-4" id="kpiRow"></div>
 
-      <!-- Navegación de los 4 Componentes Funcionales (Fig. 12 del Informe) -->
+      <!-- Navegación de los 4 Módulos Operativos -->
       <ul class="nav nav-pills nav-modules mb-4" id="coreTabs" role="tablist">
         <li class="nav-item" role="presentation">
           <button class="nav-link active" id="tab-registro" data-bs-toggle="pill" data-bs-target="#pane-registro" type="button" role="tab">
@@ -515,7 +494,7 @@
       <div class="tab-content" id="coreTabsContent">
 
         <!-- ====================================================================
-             COMPONENTE 1: REGISTRO Y CONSULTA
+             MÓDULO 1: REGISTRO Y CONSULTA
              ==================================================================== -->
         <div class="tab-pane fade show active" id="pane-registro" role="tabpanel">
           <div class="card-panel p-3 p-md-4">
@@ -589,7 +568,7 @@
         </div>
 
         <!-- ====================================================================
-             COMPONENTE 2: SEGUIMIENTO, OBSERVACIONES Y SUBSANACIÓN
+             MÓDULO 2: SEGUIMIENTO, OBSERVACIONES Y SUBSANACIÓN
              ==================================================================== -->
         <div class="tab-pane fade" id="pane-seguimiento" role="tabpanel">
           <!-- Selector Global de Requerimiento -->
@@ -695,7 +674,7 @@
         </div>
 
         <!-- ====================================================================
-             COMPONENTE 3: ARCHIVOS Y VISTA PREVIA
+             MÓDULO 3: ARCHIVOS Y VISTA PREVIA
              ==================================================================== -->
         <div class="tab-pane fade" id="pane-archivos" role="tabpanel">
           <div class="row g-4">
@@ -764,7 +743,7 @@
         </div>
 
         <!-- ====================================================================
-             COMPONENTE 4: FLUJO DE VALIDACIÓN (HU-08, HU-09, HU-10 · EVENTO_VALIDACIÓN)
+             MÓDULO 4: FLUJO DE VALIDACIÓN (VISTO BUENO -> DERIVACIÓN -> CONFORMIDAD)
              ==================================================================== -->
         <div class="tab-pane fade" id="pane-validacion" role="tabpanel">
           <div class="card-panel p-3 p-md-4 mb-4">
@@ -779,7 +758,7 @@
             </div>
           </div>
 
-          <!-- Cadena Secuencial de 3 Actos Diferenciados (RN-06, RN-07, RN-08) -->
+          <!-- Cadena Secuencial de 3 Actos Diferenciados -->
           <div class="row g-4" id="validationChainContainer"></div>
         </div>
 
@@ -921,205 +900,74 @@
         </div>
       </div>
     </div>
-    // Los 3 Perfiles Oficiales (AU, EC, RP)
-    const USUARIOS_SISTEMA = [
-      {
-        id_usuario: "USR-AU-01",
-        email: "areausuaria@inei.gob.pe",
-        password: "inei2026",
-        nombre: "Coord. Dirección Nacional de Evaluación",
-        perfil: "AU",
-        perfilNombre: "Área Usuaria (AU)",
-        descripcionRol: "Habilitado para registrar requerimientos, consultar información, subsanar observaciones, gestionar archivos y dar Visto Bueno."
-      },
-      {
-        id_usuario: "USR-EC-01",
-        email: "eorihuela@inei.gob.pe",
-        password: "inei2026",
-        nombre: "Eder Paulo Orihuela Espejo",
-        perfil: "EC",
-        perfilNombre: "Especialista de Control de Calidad (EC)",
-        descripcionRol: "Habilitado para registrar requerimientos, actualizar estados, registrar y subsanar observaciones, gestionar archivos y derivar el Visto Bueno."
-      },
-      {
-        id_usuario: "USR-RP-01",
-        email: "lhiguchi@inei.gob.pe",
-        password: "inei2026",
-        nombre: "Ing. Luis Alberto Higuchi Maruyama",
-        perfil: "RP",
-        perfilNombre: "Responsable del Proyecto (RP)",
-        descripcionRol: "Habilitado para consultar requerimientos, previsualizar/descargar archivos y reportes, y otorgar la Conformidad final."
-      }
-    ];
-// ... existing code ... -->
-      // Nuevo requerimiento (AU y EC)
-      const btnNew = document.getElementById("btnNuevoRequerimiento");
-      btnNew.disabled = !canRegistrarReq();
-      btnNew.title = canRegistrarReq()
-        ? "Registrar nuevo requerimiento"
-        : "Acceso restringido: El Responsable del Proyecto (RP) no registra solicitudes.";
 
-      // Actualizar estado (Solo EC)
-// ... existing code ... -->
-    function openModalNuevoRequerimiento() {
-      if (!canRegistrarReq()) {
-        notify("Acceso restringido: Solo el Área Usuaria (AU) y el Especialista (EC) pueden registrar requerimientos.", "warning");
-        return;
-      }
-      document.getElementById("formNuevoReq").reset();
-      document.getElementById("nuevoReqErrorBox").classList.add("d-none");
-      document.getElementById("modalReqCodigo").value = nextCode("REQ-2026-", state.requerimientos, "codigo");
-      document.getElementById("modalReqAutor").value = `${currentUser.nombre} (${currentUser.perfil})`;
-      bootstrap.Modal.getOrCreateInstance(document.getElementById("modalNuevoReq")).show();
-    }
+    <!-- ========================================================================
+         MODAL: RESTAURAR DATOS DE EJEMPLO
+         ======================================================================== -->
+    <div class="modal fade" id="modalResetDemo" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3 overflow-hidden">
+          <div class="modal-header modal-header-inei">
+            <h5 class="modal-title fw-bold h6 mb-0">
+              <i class="bi bi-arrow-counterclockwise me-2"></i>Restaurar Datos Iniciales
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body p-4 small">
+            ¿Desea restablecer los requerimientos, cambios de estado, observaciones, subsanaciones, archivos y validaciones al estado inicial de demostración?
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-sm btn-warning fw-semibold" onclick="resetDemoData()">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar Datos
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    document.getElementById("formNuevoReq").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!canRegistrarReq()) return;
+  </div>
 
-      const errBox = document.getElementById("nuevoReqErrorBox");
-      const codigo = document.getElementById("modalReqCodigo").value.trim();
-      const area = document.getElementById("modalReqArea").value;
-      const descripcion = document.getElementById("modalReqDescripcion").value.trim();
+  <!-- Contenedor de Notificaciones Toast -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="appToast" class="toast align-items-center border-0 shadow-lg text-white bg-primary" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body small fw-medium" id="appToastBody"></div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+      </div>
+    </div>
+  </div>
 
-      if (!area || !descripcion) {
-        errBox.textContent = "Complete los campos obligatorios: seleccione el área de origen e ingrese la descripción.";
-        errBox.classList.remove("d-none");
-        return;
-      }
-      errBox.classList.add("d-none");
-// ... existing code ... -->
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Reporte_Requerimientos_INEI_2026_${currentUser.perfil}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      notify(`Reporte descargado correctamente para el perfil ${currentUser.perfil}.`, "success");
-    }
-// ... existing code ... -->
-                <!-- Formulario inline de Subsanación (Permitido para AU y EC) -->
-                ${
-                  canSubsanarObs()
-                    ? `<form class="mt-2 pt-2 border-top d-flex gap-2" onsubmit="registrarSubsanacion(event, '${esc(obs.id_observacion)}')">
-                        <input type="text" class="form-control form-control-sm" placeholder="Registrar respuesta de subsanación..." required />
-                        <button type="submit" class="btn btn-sm btn-outline-success text-nowrap fw-semibold">
-                          <i class="bi bi-reply-fill me-1"></i>Subsanar
-                        </button>
-                      </form>`
-                    : `<div class="mt-2 pt-2 border-top text-muted" style="font-size: 0.73rem;">
-                        <i class="bi bi-lock me-1"></i>Solo Área Usuaria (AU) o Especialista (EC) pueden subsanar observaciones.
-                      </div>`
-                }
-              </div>
-            `;
-          })
-          .join("");
-      }
-    }
+  <script>
+    /* ==========================================================================
+       CONTROLADOR DE MODALES, PESTAÑAS Y TOASTS (AUTOCONTENIDO Y SIN DEPENDENCIAS)
+       ========================================================================== */
+    (function () {
+      const modals = new WeakMap();
+      const tabs = new WeakMap();
 
-    document.getElementById("segReqSelector").addEventListener("change", function (e) {
-      selectedReqCode = e.target.value;
-      renderSeguimientoModule();
-    });
-
-    // Actualizar estado (Solo EC)
-    document.getElementById("formActualizarEstado").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!canActualizarEstado()) {
-        notify("Solo el Especialista de Control de Calidad (EC) puede actualizar estados.", "warning");
-        return;
-      }
-
-      const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
-      if (!req) return;
-
-      const estadoPrevio = req.estado_actual;
-      const estadoNuevo = document.getElementById("segNuevoEstadoSelect").value;
-
-      if (estadoPrevio === estadoNuevo) {
-        notify("Seleccione un estado diferente al estado actual.", "warning");
-        return;
-      }
-
-      req.estado_actual = estadoNuevo;
-      state.cambios_estado.push({
-        id_cambio: nextCode("CAM-", state.cambios_estado, "id_cambio"),
-        codigo_req: req.codigo,
-        estado_previo: estadoPrevio,
-        estado_nuevo: estadoNuevo,
-        autor: `${currentUser.nombre} (${currentUser.perfil})`,
-        fecha: nowStr()
-      });
-
-      saveState();
-      renderAll();
-      notify(`Estado actualizado: ${estadoPrevio} → ${estadoNuevo}.`, "success");
-    });
-
-    // Registrar observación (Solo EC)
-    document.getElementById("formNuevaObservacion").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!canRegistrarObs()) {
-        notify("Solo el Especialista de Control de Calidad (EC) puede registrar observaciones.", "warning");
-        return;
-      }
-
-      const desc = document.getElementById("obsDescripcionInput").value.trim();
-      if (!desc) return;
-
-      const newObsId = nextCode("OBS-", state.observaciones, "id_observacion");
-      state.observaciones.push({
-        id_observacion: newObsId,
-        codigo_req: selectedReqCode,
-        autor: `${currentUser.nombre} (${currentUser.perfil})`,
-        descripcion: desc,
-        fecha: nowStr()
-      });
-
-      document.getElementById("obsDescripcionInput").value = "";
-      saveState();
-      renderAll();
-      notify(`Observación ${newObsId} vinculada a ${selectedReqCode}.`, "danger");
-    });
-
-    // Subsanar observación (AU y EC) - NO cambia por sí solo el estado del requerimiento
-    function registrarSubsanacion(event, idObservacion) {
-      event.preventDefault();
-      if (!canSubsanarObs()) {
-        notify("Su perfil no está autorizado para subsanar observaciones.", "warning");
-        return;
-      }
-      const input = event.target.querySelector("input");
-      const respuesta = (input.value || "").trim();
-      if (!respuesta) return;
-
-      const newSubId = nextCode("SUB-", state.subsanaciones, "id_subsanacion");
-      state.subsanaciones.push({
-        id_subsanacion: newSubId,
-        id_observacion: idObservacion,
-        autor: `${currentUser.nombre} (${currentUser.perfil})`,
-        respuesta,
-        fecha: nowStr()
-      });
-
-      saveState();
-      renderAll();
-      notify(`Subsanación ${newSubId} registrada (el estado del requerimiento se mantiene sin cambios).`, "success");
-    }
+      class SimpleModal {
+        constructor(el) {
+          this.el = typeof el === "string" ? document.querySelector(el) : el;
+          if (this.el) modals.set(this.el, this);
+        }
         static getOrCreateInstance(el) {
           const target = typeof el === "string" ? document.querySelector(el) : el;
           return modals.get(target) || new SimpleModal(target);
         }
         show() {
           if (!this.el) return;
+          document.querySelectorAll(".modal.show").forEach((m) => {
+            if (m !== this.el) SimpleModal.getOrCreateInstance(m).hide();
+          });
           this.el.style.display = "block";
           this.el.classList.add("show");
+          this.el.removeAttribute("aria-hidden");
           document.body.classList.add("modal-open");
           if (!document.querySelector(".modal-backdrop")) {
             const bd = document.createElement("div");
             bd.className = "modal-backdrop fade show";
+            bd.addEventListener("click", () => this.hide());
             document.body.appendChild(bd);
           }
         }
@@ -1127,6 +975,7 @@
           if (!this.el) return;
           this.el.classList.remove("show");
           this.el.style.display = "none";
+          this.el.setAttribute("aria-hidden", "true");
           document.body.classList.remove("modal-open");
           document.querySelectorAll(".modal-backdrop").forEach((b) => b.remove());
         }
@@ -1163,7 +1012,8 @@
           if (!this.el) return;
           this.el.style.display = "block";
           this.el.classList.add("show");
-          setTimeout(() => {
+          clearTimeout(this.el._hideTimer);
+          this.el._hideTimer = setTimeout(() => {
             this.el.classList.remove("show");
             this.el.style.display = "none";
           }, 3500);
@@ -1182,6 +1032,15 @@
           SimpleModal.getOrCreateInstance(mClose.closest(".modal")).hide();
           return;
         }
+        const tClose = e.target.closest('[data-bs-dismiss="toast"]');
+        if (tClose) {
+          const toastEl = tClose.closest(".toast");
+          if (toastEl) {
+            toastEl.classList.remove("show");
+            toastEl.style.display = "none";
+          }
+          return;
+        }
         const tTrig = e.target.closest('[data-bs-toggle="pill"], [data-bs-toggle="tab"]');
         if (tTrig) {
           e.preventDefault();
@@ -1189,17 +1048,22 @@
         }
       });
 
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.querySelectorAll(".modal.show").forEach((m) => SimpleModal.getOrCreateInstance(m).hide());
+        }
+      });
+
       window.bootstrap = { Modal: SimpleModal, Tab: SimpleTab, Toast: SimpleToast };
     })();
 
     /* ==========================================================================
-       MODELO DE DOMINIO Y PERFILES SEGÚN INFORME FINAL (TABLA X Y FIG. 14)
+       MODELO DE DATOS Y ROLES OPERATIVOS (AU, EC, RP)
        ========================================================================== */
-    const STORAGE_KEY = "sgr_inei_final_v3";
-    const AUTH_SESSION_KEY = "sgr_inei_auth_final_v3";
+    const STORAGE_KEY = "sgr_inei_operativo_v4";
+    const AUTH_SESSION_KEY = "sgr_inei_auth_operativo_v4";
     const uploadedFileBlobs = new Map();
 
-    // Los 3 Perfiles Oficiales del Informe (AU, EC, RP)
     const USUARIOS_SISTEMA = [
       {
         id_usuario: "USR-AU-01",
@@ -1208,7 +1072,7 @@
         nombre: "Coord. Dirección Nacional de Evaluación",
         perfil: "AU",
         perfilNombre: "Área Usuaria (AU)",
-        descripcionRol: "Habilitado para registrar requerimientos (HU-01), subsanar observaciones (HU-05) y dar Visto Bueno (HU-08)."
+        descripcionRol: "Habilitado para registrar requerimientos, consultar información, subsanar observaciones, gestionar archivos y dar Visto Bueno."
       },
       {
         id_usuario: "USR-EC-01",
@@ -1217,7 +1081,7 @@
         nombre: "Eder Paulo Orihuela Espejo",
         perfil: "EC",
         perfilNombre: "Especialista de Control de Calidad (EC)",
-        descripcionRol: "Habilitado para registrar requerimientos (HU-01), actualizar estado (HU-03), registrar observaciones (HU-04), subsanar (HU-05) y derivar Visto Bueno (HU-09)."
+        descripcionRol: "Habilitado para registrar requerimientos, actualizar estados, registrar y subsanar observaciones, gestionar archivos y derivar el Visto Bueno."
       },
       {
         id_usuario: "USR-RP-01",
@@ -1226,7 +1090,7 @@
         nombre: "Ing. Luis Alberto Higuchi Maruyama",
         perfil: "RP",
         perfilNombre: "Responsable del Proyecto (RP)",
-        descripcionRol: "Habilitado para consultar requerimientos (HU-02), previsualizar/descargar archivos y reportes (HU-06/07) y dar Conformidad final (HU-10)."
+        descripcionRol: "Habilitado para consultar requerimientos, previsualizar/descargar archivos y reportes, y otorgar la Conformidad final."
       }
     ];
 
@@ -1238,7 +1102,6 @@
       "Sistemas y Monitoreo Informático"
     ];
 
-    // Catálogo preliminar de estados (RN-03)
     const CATALOGO_ESTADOS = [
       "Registrado",
       "En análisis y precisión",
@@ -1293,7 +1156,6 @@
             fecha_registro: "2026-09-14 10:05"
           }
         ],
-        // Entidad CAMBIO_ESTADO (Fig. 14: estado_previo, estado_nuevo, autor, fecha)
         cambios_estado: [
           {
             id_cambio: "CAM-001",
@@ -1344,7 +1206,6 @@
             fecha: "2026-09-17 11:15"
           }
         ],
-        // Entidad OBSERVACIÓN (Fig. 14)
         observaciones: [
           {
             id_observacion: "OBS-001",
@@ -1361,7 +1222,6 @@
             fecha: "2026-09-13 09:30"
           }
         ],
-        // Entidad SUBSANACIÓN (Fig. 14: vinculada a id_observacion)
         subsanaciones: [
           {
             id_subsanacion: "SUB-001",
@@ -1371,7 +1231,6 @@
             fecha: "2026-09-13 15:45"
           }
         ],
-        // Entidad ARCHIVO (Fig. 14: id_requerimiento, id_observacion opcional, referencia)
         archivos: [
           {
             id_archivo: "ARC-001",
@@ -1407,7 +1266,6 @@
             fecha: "2026-09-16 17:00"
           }
         ],
-        // Entidad EVENTO_VALIDACIÓN (Fig. 14: Visto bueno -> Derivación -> Conformidad)
         eventos_validacion: [
           {
             id_evento: "VAL-001",
@@ -1487,19 +1345,19 @@
     }
 
     /* ==========================================================================
-       CONTROL DE PERMISOS SEGÚN TABLA X Y REGLAS DE NEGOCIO (RN-01 a RN-09)
+       CONTROL DE PERMISOS POR ROL (AU, EC, RP)
        ========================================================================== */
     function isAU() { return currentUser && currentUser.perfil === "AU"; }
     function isEC() { return currentUser && currentUser.perfil === "EC"; }
     function isRP() { return currentUser && currentUser.perfil === "RP"; }
 
-    function canRegistrarReq() { return isAU() || isEC(); }       // HU-01
-    function canActualizarEstado() { return isEC(); }             // HU-03 / RN-03
-    function canRegistrarObs() { return isEC(); }                 // HU-04 / RN-04
-    function canSubsanarObs() { return isAU() || isEC(); }        // HU-05 / RN-05
-    function canDarVistoBueno() { return isAU(); }                // HU-08 / RN-06
-    function canDerivarVistoBueno() { return isEC(); }            // HU-09 / RN-07
-    function canDarConformidad() { return isRP(); }               // HU-10 / RN-08
+    function canRegistrarReq() { return isAU() || isEC(); }
+    function canActualizarEstado() { return isEC(); }
+    function canRegistrarObs() { return isEC(); }
+    function canSubsanarObs() { return isAU() || isEC(); }
+    function canDarVistoBueno() { return isAU(); }
+    function canDerivarVistoBueno() { return isEC(); }
+    function canDarConformidad() { return isRP(); }
 
     function loginWithCredentials(email, password) {
       const normalized = (email || "").trim().toLowerCase();
@@ -1555,18 +1413,15 @@
       document.getElementById("roleContextText").innerHTML =
         `<i class="bi bi-person-check-fill me-1 text-primary"></i><strong>${esc(currentUser.perfilNombre)}:</strong> ${esc(currentUser.descripcionRol)}`;
 
-      // HU-01: Nuevo requerimiento (AU y EC)
       const btnNew = document.getElementById("btnNuevoRequerimiento");
       btnNew.disabled = !canRegistrarReq();
       btnNew.title = canRegistrarReq()
-        ? "Registrar nuevo requerimiento (HU-01)"
-        : "Restringido (Tabla X): El Responsable del Proyecto (RP) no registra solicitudes.";
+        ? "Registrar nuevo requerimiento"
+        : "Acceso restringido: El Responsable del Proyecto (RP) no registra solicitudes.";
 
-      // HU-03: Actualizar estado (Solo EC)
       document.getElementById("segNuevoEstadoSelect").disabled = !canActualizarEstado();
       document.getElementById("btnGuardarEstado").disabled = !canActualizarEstado();
 
-      // HU-04: Registrar observación (Solo EC)
       document.getElementById("obsDescripcionInput").disabled = !canRegistrarObs();
       document.getElementById("btnGuardarObs").disabled = !canRegistrarObs();
     }
@@ -1577,7 +1432,7 @@
       selectedReqCode = state.requerimientos[0].codigo;
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalResetDemo")).hide();
       renderAll();
-      notify("Datos de demostración restaurados.", "success");
+      notify("Datos iniciales restaurados correctamente.", "success");
     }
 
     /* ==========================================================================
@@ -1747,7 +1602,7 @@
     }
 
     /* ==========================================================================
-       COMPONENTE 1: REGISTRO Y CONSULTA (HU-01, HU-02, HU-07)
+       MÓDULO 1: REGISTRO Y CONSULTA
        ========================================================================== */
     function renderRegistroModule() {
       const searchCode = document.getElementById("filterReqCodigo").value.trim().toLowerCase();
@@ -1802,7 +1657,7 @@
               </td>
               <td>
                 <div class="small fw-medium">${esc(req.registro_por)}</div>
-                <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">Perfil ${esc(req.perfil_registro)}</span>
+                <span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">Rol ${esc(req.perfil_registro)}</span>
               </td>
               <td>${statusBadge(req.estado_actual)}</td>
               <td>${valBadge}</td>
@@ -1831,7 +1686,7 @@
 
     function openModalNuevoRequerimiento() {
       if (!canRegistrarReq()) {
-        notify("Acceso restringido (Tabla X): Solo AU y EC pueden registrar requerimientos.", "warning");
+        notify("Acceso restringido: Solo el Área Usuaria (AU) y el Especialista (EC) pueden registrar requerimientos.", "warning");
         return;
       }
       document.getElementById("formNuevoReq").reset();
@@ -1851,7 +1706,7 @@
       const descripcion = document.getElementById("modalReqDescripcion").value.trim();
 
       if (!area || !descripcion) {
-        errBox.textContent = "RNF-02: Debe seleccionar el área de origen e ingresar la descripción obligatoria.";
+        errBox.textContent = "Complete los campos obligatorios: seleccione el área de origen e ingrese la descripción.";
         errBox.classList.remove("d-none");
         return;
       }
@@ -1893,13 +1748,12 @@
       notify(`Requerimiento ${codigo} registrado por ${currentUser.perfil}.`, "success");
     });
 
-    // HU-07: Descargar Reporte CSV (Disponible para AU, EC y RP)
     function descargarReporteCSV() {
       const headers = [
         "Codigo_Requerimiento",
         "Area_Origen",
         "Registrado_Por",
-        "Perfil_Registro",
+        "Rol_Registro",
         "Estado_Actual",
         "Fecha_Registro",
         "Total_Observaciones",
@@ -1935,11 +1789,11 @@
       a.click();
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      notify(`Reporte descargado correctamente para perfil ${currentUser.perfil} (HU-07).`, "success");
+      notify(`Reporte descargado correctamente para el rol ${currentUser.perfil}.`, "success");
     }
 
     /* ==========================================================================
-       COMPONENTE 2: SEGUIMIENTO, OBSERVACIONES Y SUBSANACIÓN (HU-03 a HU-05)
+       MÓDULO 2: SEGUIMIENTO, OBSERVACIONES Y SUBSANACIÓN
        ========================================================================== */
     function jumpToSeguimiento(codigo) {
       selectedReqCode = codigo;
@@ -1971,7 +1825,6 @@
       document.getElementById("segEstadoPrevioInput").value = req.estado_actual;
       document.getElementById("segNuevoEstadoSelect").value = req.estado_actual;
 
-      // Render historial CAMBIO_ESTADO
       const cambios = state.cambios_estado.filter((c) => c.codigo_req === req.codigo).reverse();
       document.getElementById("segHistoryCount").textContent = `${cambios.length} cambio(s)`;
 
@@ -2001,7 +1854,6 @@
           .join("");
       }
 
-      // Render OBSERVACIÓN + SUBSANACIÓN vinculada (HU-04 y HU-05)
       const obsList = state.observaciones.filter((o) => o.codigo_req === req.codigo).reverse();
       document.getElementById("obsReqCountBadge").textContent = `${obsList.length} obs.`;
 
@@ -2031,7 +1883,6 @@
                   Observado por: <strong>${esc(obs.autor)}</strong>
                 </div>
 
-                <!-- Subsanaciones vinculadas (Entidad SUBSANACIÓN) -->
                 ${
                   subs.length > 0
                     ? `<div class="ms-3 ps-3 border-start border-2 border-success d-flex flex-column gap-2 my-2">
@@ -2053,11 +1904,10 @@
                     : ""
                 }
 
-                <!-- Formulario inline de Subsanación (HU-05: Permitido para AU y EC) -->
                 ${
                   canSubsanarObs()
                     ? `<form class="mt-2 pt-2 border-top d-flex gap-2" onsubmit="registrarSubsanacion(event, '${esc(obs.id_observacion)}')">
-                        <input type="text" class="form-control form-control-sm" placeholder="Registrar respuesta de subsanación (HU-05)..." required />
+                        <input type="text" class="form-control form-control-sm" placeholder="Registrar respuesta de subsanación..." required />
                         <button type="submit" class="btn btn-sm btn-outline-success text-nowrap fw-semibold">
                           <i class="bi bi-reply-fill me-1"></i>Subsanar
                         </button>
@@ -2078,11 +1928,10 @@
       renderSeguimientoModule();
     });
 
-    // HU-03: Actualizar estado (Solo EC)
     document.getElementById("formActualizarEstado").addEventListener("submit", function (e) {
       e.preventDefault();
       if (!canActualizarEstado()) {
-        notify("RN-03: Solo el Especialista de Control de Calidad (EC) actualiza estados.", "warning");
+        notify("Solo el Especialista de Control de Calidad (EC) puede actualizar estados.", "warning");
         return;
       }
 
@@ -2112,11 +1961,10 @@
       notify(`Estado actualizado: ${estadoPrevio} → ${estadoNuevo}.`, "success");
     });
 
-    // HU-04: Registrar observación (Solo EC)
     document.getElementById("formNuevaObservacion").addEventListener("submit", function (e) {
       e.preventDefault();
       if (!canRegistrarObs()) {
-        notify("RN-04: Solo el Especialista de Control de Calidad (EC) registra observaciones.", "warning");
+        notify("Solo el Especialista de Control de Calidad (EC) puede registrar observaciones.", "warning");
         return;
       }
 
@@ -2138,11 +1986,10 @@
       notify(`Observación ${newObsId} vinculada a ${selectedReqCode}.`, "danger");
     });
 
-    // HU-05: Subsanar observación (AU y EC) - NO cambia por sí solo el estado del requerimiento
     function registrarSubsanacion(event, idObservacion) {
       event.preventDefault();
       if (!canSubsanarObs()) {
-        notify("RN-05: Perfil no autorizado para subsanar observaciones.", "warning");
+        notify("Su rol no está autorizado para subsanar observaciones.", "warning");
         return;
       }
       const input = event.target.querySelector("input");
@@ -2160,11 +2007,11 @@
 
       saveState();
       renderAll();
-      notify(`Subsanación ${newSubId} registrada (el estado del requerimiento se mantiene intacto según RN-05).`, "success");
+      notify(`Subsanación ${newSubId} registrada (el estado del requerimiento se mantiene sin cambios).`, "success");
     }
 
     /* ==========================================================================
-       COMPONENTE 3: ARCHIVOS Y VISTA PREVIA (HU-06)
+       MÓDULO 3: ARCHIVOS Y VISTA PREVIA
        ========================================================================== */
     let pendingUploadFiles = [];
 
@@ -2245,7 +2092,6 @@
         .join("");
     }
 
-    // Previsualizar archivo compatible antes de descargarlo
     function previsualizarArchivo(arcId) {
       const arc = state.archivos.find((a) => a.id_archivo === arcId);
       if (!arc) return;
@@ -2299,7 +2145,7 @@
                 [VISTA PREVIA DEL CONTENIDO DEL DOCUMENTO INSTITUCIONAL INEI]<br/>
                 Proyecto: Evaluación Docente para el Ascenso 2026<br/>
                 Solicitud vinculada: ${esc(arc.codigo_req)} ${arc.id_observacion ? `| Observación: ${esc(arc.id_observacion)}` : ""}<br/>
-                Estado de integridad: Verificado y autorizado para perfil ${esc(currentUser.perfil)}.
+                Estado de integridad: Verificado y autorizado para rol ${esc(currentUser.perfil)}.
               </div>
             </div>
           `;
@@ -2307,7 +2153,7 @@
           bodyEl.innerHTML = `
             <div class="alert alert-warning mb-0 small">
               <i class="bi bi-info-circle-fill me-1"></i>
-              <strong>Formato sin vista previa directa (.${esc(ext)}):</strong> Se conserva habilitada la descarga autorizada para su perfil.
+              <strong>Formato sin vista previa directa (.${esc(ext)}):</strong> Se conserva habilitada la descarga autorizada para su rol.
             </div>
           `;
         }
@@ -2315,13 +2161,112 @@
 
       bootstrap.Modal.getOrCreateInstance(document.getElementById("modalPreviewArchivo")).show();
     }
+
+    function descargarArchivo(arcId) {
+      const arc = state.archivos.find((a) => a.id_archivo === arcId);
+      if (!arc) return;
+
+      const realBlob = uploadedFileBlobs.get(arcId);
+      let blob;
+      if (realBlob) {
+        blob = realBlob;
+      } else {
+        const ficha = [
+          "SGR-INEI - DOCUMENTO ASOCIADO A REQUERIMIENTO",
+          "============================================",
+          `ID Archivo      : ${arc.id_archivo}`,
+          `Requerimiento   : ${arc.codigo_req}`,
+          `Observación     : ${arc.id_observacion || "Ninguna"}`,
+          `Nombre Archivo  : ${arc.nombre}`,
+          `Referencia      : ${arc.referencia}`,
+          `Subido Por      : ${arc.autor}`,
+          `Fecha           : ${arc.fecha}`
+        ].join("\n");
+        blob = new Blob([ficha], { type: "text/plain;charset=utf-8;" });
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = realBlob ? arc.nombre : `${arc.nombre}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      notify(`Descargando "${arc.nombre}"...`, "primary");
+    }
+
+    document.getElementById("formSubirArchivo").addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (pendingUploadFiles.length === 0) {
+        notify("Seleccione o arrastre al menos un archivo.", "warning");
+        return;
+      }
+
+      const codigoReq = document.getElementById("fileReqSelect").value;
+      const idObs = document.getElementById("fileObsOptionalSelect").value;
+      const refText = document.getElementById("fileReferenciaInput").value.trim();
+      const fecha = nowStr();
+
+      pendingUploadFiles.forEach((file) => {
+        const arcCode = nextCode("ARC-", state.archivos, "id_archivo");
+        uploadedFileBlobs.set(arcCode, file);
+        state.archivos.push({
+          id_archivo: arcCode,
+          codigo_req: codigoReq,
+          id_observacion: idObs,
+          nombre: file.name,
+          tipo_mime: file.type || "application/octet-stream",
+          tamano: formatBytes(file.size),
+          referencia: refText || `Archivo asociado a ${codigoReq}`,
+          autor: `${currentUser.nombre} (${currentUser.perfil})`,
+          fecha
+        });
+      });
+
+      const count = pendingUploadFiles.length;
+      pendingUploadFiles = [];
+      document.getElementById("fileUploadInput").value = "";
+      document.getElementById("fileReferenciaInput").value = "";
+      updateSelectedFilesPreview();
+      saveState();
+      renderAll();
+      notify(`${count} archivo(s) vinculado(s) a ${codigoReq}.`, "success");
+    });
+
+    /* ==========================================================================
+       MÓDULO 4: FLUJO DE VALIDACIÓN (VISTO BUENO -> DERIVACIÓN -> CONFORMIDAD)
+       ========================================================================== */
+    function jumpToValidacion(codigo) {
+      selectedReqCode = codigo;
+      renderValidacionModule();
+      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-validacion")).show();
+    }
+
+    function renderValidacionModule() {
+      const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
+      if (!req) return;
+
+      document.getElementById("valReqHeaderSummary").innerHTML = `
+        <div class="bg-light border rounded-3 p-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+            <span class="fw-bold small text-dark">${esc(req.area)}</span>
+            ${statusBadge(req.estado_actual)}
+          </div>
+          <div class="small text-secondary">${esc(req.descripcion)}</div>
+        </div>
+      `;
+
+      const { vb, derivacion, conformidad } = getValidationStateForReq(req.codigo);
+      const container = document.getElementById("validationChainContainer");
+
       // Paso 1: Visto Bueno (AU)
       const step1Html = `
         <div class="col-12 col-lg-4">
           <div class="validation-step-card ${vb ? "completed" : "active-turn"}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <span class="step-number-circle ${vb ? "bg-success text-white" : "bg-primary text-white"}">1</span>
-              <span class="badge bg-info text-dark">Perfil: Área Usuaria (AU)</span>
+              <span class="badge bg-info text-dark">Rol: Área Usuaria (AU)</span>
             </div>
             <h4 class="h6 fw-bold mb-1">Visto Bueno del Área Usuaria</h4>
             <p class="small text-muted mb-3">
@@ -2338,7 +2283,7 @@
                     <button type="button" class="btn btn-sm btn-info text-dark fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="ejecutarVistoBueno('${esc(req.codigo)}')">
                       <i class="bi bi-hand-thumbs-up-fill me-1"></i>Dar Visto Bueno (AU)
                     </button>
-                    ${!canDarVistoBueno() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del perfil Área Usuaria (AU).</small>` : ""}
+                    ${!canDarVistoBueno() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del Área Usuaria (AU).</small>` : ""}
                   </div>`
             }
           </div>
@@ -2351,7 +2296,7 @@
           <div class="validation-step-card ${derivacion ? "completed" : vb ? "active-turn" : ""}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <span class="step-number-circle ${derivacion ? "bg-success text-white" : vb ? "bg-primary text-white" : "bg-secondary-subtle text-secondary"}">2</span>
-              <span class="badge bg-primary">Perfil: Especialista Calidad (EC)</span>
+              <span class="badge bg-primary">Rol: Especialista Calidad (EC)</span>
             </div>
             <h4 class="h6 fw-bold mb-1">Derivación del Visto Bueno</h4>
             <p class="small text-muted mb-3">
@@ -2386,7 +2331,7 @@
           <div class="validation-step-card ${conformidad ? "completed" : derivacion ? "active-turn" : ""}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <span class="step-number-circle ${conformidad ? "bg-success text-white" : derivacion ? "bg-success text-white" : "bg-secondary-subtle text-secondary"}">3</span>
-              <span class="badge bg-success">Perfil: Responsable Proyecto (RP)</span>
+              <span class="badge bg-success">Rol: Responsable Proyecto (RP)</span>
             </div>
             <h4 class="h6 fw-bold mb-1">Conformidad del Proyecto</h4>
             <p class="small text-muted mb-3">
@@ -2471,236 +2416,6 @@
       notify(`Conformidad del requerimiento registrada (${newValId}).`, "success");
     }
 
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = realBlob ? arc.nombre : `${arc.nombre}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      notify(`Descargando "${arc.nombre}"...`, "primary");
-    }
-
-    document.getElementById("formSubirArchivo").addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (pendingUploadFiles.length === 0) {
-        notify("Seleccione o arrastre al menos un archivo.", "warning");
-        return;
-      }
-
-      const codigoReq = document.getElementById("fileReqSelect").value;
-      const idObs = document.getElementById("fileObsOptionalSelect").value;
-      const refText = document.getElementById("fileReferenciaInput").value.trim();
-      const fecha = nowStr();
-
-      pendingUploadFiles.forEach((file) => {
-        const arcCode = nextCode("ARC-", state.archivos, "id_archivo");
-        uploadedFileBlobs.set(arcCode, file);
-        state.archivos.push({
-          id_archivo: arcCode,
-          codigo_req: codigoReq,
-          id_observacion: idObs,
-          nombre: file.name,
-          tipo_mime: file.type || "application/octet-stream",
-          tamano: formatBytes(file.size),
-          referencia: refText || `Archivo asociado a ${codigoReq}`,
-          autor: `${currentUser.nombre} (${currentUser.perfil})`,
-          fecha
-        });
-      });
-
-      const count = pendingUploadFiles.length;
-      pendingUploadFiles = [];
-      document.getElementById("fileUploadInput").value = "";
-      document.getElementById("fileReferenciaInput").value = "";
-      updateSelectedFilesPreview();
-      saveState();
-      renderAll();
-      notify(`${count} archivo(s) vinculado(s) a ${codigoReq}.`, "success");
-    });
-
-    /* ==========================================================================
-       COMPONENTE 4: FLUJO DE VALIDACIÓN (HU-08, HU-09, HU-10 · EVENTO_VALIDACIÓN)
-       ========================================================================== */
-    function jumpToValidacion(codigo) {
-      selectedReqCode = codigo;
-      renderValidacionModule();
-      bootstrap.Tab.getOrCreateInstance(document.getElementById("tab-validacion")).show();
-    }
-
-    function renderValidacionModule() {
-      const req = state.requerimientos.find((r) => r.codigo === selectedReqCode);
-      if (!req) return;
-
-      document.getElementById("valReqHeaderSummary").innerHTML = `
-        <div class="bg-light border rounded-3 p-3">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
-            <span class="fw-bold small text-dark">${esc(req.area)}</span>
-            ${statusBadge(req.estado_actual)}
-          </div>
-          <div class="small text-secondary">${esc(req.descripcion)}</div>
-        </div>
-      `;
-
-      const { vb, derivacion, conformidad } = getValidationStateForReq(req.codigo);
-      const container = document.getElementById("validationChainContainer");
-
-      // Paso 1: Visto Bueno (AU - HU-08)
-      const step1Html = `
-        <div class="col-12 col-lg-4">
-          <div class="validation-step-card ${vb ? "completed" : "active-turn"}">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="step-number-circle ${vb ? "bg-success text-white" : "bg-primary text-white"}">1</span>
-              <span class="badge bg-info text-dark">HU-08 · Perfil AU</span>
-            </div>
-            <h4 class="h6 fw-bold mb-1">Visto Bueno del Área Usuaria</h4>
-            <p class="small text-muted mb-3">
-              El Área Usuaria deja constancia de su validación funcional sobre la implementación (RN-06).
-            </p>
-            ${
-              vb
-                ? `<div class="bg-white border border-success-subtle rounded-2 p-2 small mb-2">
-                    <div class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Visto Bueno Registrado (${esc(vb.id_evento)})</div>
-                    <div class="text-muted mt-1">Autor: <strong>${esc(vb.autor)}</strong></div>
-                    <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(vb.fecha)}</div>
-                  </div>`
-                : `<div class="d-grid">
-                    <button type="button" class="btn btn-sm btn-info text-dark fw-semibold" ${!canDarVistoBueno() ? "disabled" : ""} onclick="ejecutarVistoBueno('${esc(req.codigo)}')">
-                      <i class="bi bi-hand-thumbs-up-fill me-1"></i>Dar Visto Bueno (AU)
-                    </button>
-                    ${!canDarVistoBueno() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del perfil Área Usuaria (AU).</small>` : ""}
-                  </div>`
-            }
-          </div>
-        </div>
-      `;
-
-      // Paso 2: Derivación del Visto Bueno (EC - HU-09)
-      const step2Html = `
-        <div class="col-12 col-lg-4">
-          <div class="validation-step-card ${derivacion ? "completed" : vb ? "active-turn" : ""}">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="step-number-circle ${derivacion ? "bg-success text-white" : vb ? "bg-primary text-white" : "bg-secondary-subtle text-secondary"}">2</span>
-              <span class="badge bg-primary">HU-09 · Perfil EC</span>
-            </div>
-            <h4 class="h6 fw-bold mb-1">Derivación del Visto Bueno</h4>
-            <p class="small text-muted mb-3">
-              El Especialista deriva el Visto Bueno previo al Responsable del Proyecto (RN-07).
-            </p>
-            ${
-              derivacion
-                ? `<div class="bg-white border border-success-subtle rounded-2 p-2 small mb-2">
-                    <div class="text-success fw-bold"><i class="bi bi-send-check-fill me-1"></i>Derivado al RP (${esc(derivacion.id_evento)})</div>
-                    <div class="text-muted mt-1">Vinculado a: <span class="font-mono">${esc(derivacion.id_evento_previo)}</span></div>
-                    <div class="text-muted">Autor: <strong>${esc(derivacion.autor)}</strong></div>
-                    <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(derivacion.fecha)}</div>
-                  </div>`
-                : !vb
-                ? `<div class="alert alert-light border small text-muted mb-0">
-                    <i class="bi bi-hourglass-split me-1"></i>Bloqueado (RN-07): Requiere Visto Bueno previo del Área Usuaria.
-                  </div>`
-                : `<div class="d-grid">
-                    <button type="button" class="btn btn-sm btn-primary fw-semibold" ${!canDerivarVistoBueno() ? "disabled" : ""} onclick="ejecutarDerivacionVB('${esc(req.codigo)}', '${esc(vb.id_evento)}')">
-                      <i class="bi bi-send-fill me-1"></i>Derivar Visto Bueno al RP (EC)
-                    </button>
-                    ${!canDerivarVistoBueno() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del Especialista (EC).</small>` : ""}
-                  </div>`
-            }
-          </div>
-        </div>
-      `;
-
-      // Paso 3: Conformidad del Requerimiento (RP - HU-10)
-      const step3Html = `
-        <div class="col-12 col-lg-4">
-          <div class="validation-step-card ${conformidad ? "completed" : derivacion ? "active-turn" : ""}">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <span class="step-number-circle ${conformidad ? "bg-success text-white" : derivacion ? "bg-success text-white" : "bg-secondary-subtle text-secondary"}">3</span>
-              <span class="badge bg-success">HU-10 · Perfil RP</span>
-            </div>
-            <h4 class="h6 fw-bold mb-1">Conformidad del Proyecto</h4>
-            <p class="small text-muted mb-3">
-              El Responsable del Proyecto registra la conformidad tras recibir la derivación (RN-08).
-            </p>
-            ${
-              conformidad
-                ? `<div class="bg-white border border-success-subtle rounded-2 p-2 small mb-2">
-                    <div class="text-success fw-bold"><i class="bi bi-patch-check-fill me-1"></i>Conformidad Emitida (${esc(conformidad.id_evento)})</div>
-                    <div class="text-muted mt-1">Vinculada a: <span class="font-mono">${esc(conformidad.id_evento_previo)}</span></div>
-                    <div class="text-muted">Autor: <strong>${esc(conformidad.autor)}</strong></div>
-                    <div class="text-muted font-mono" style="font-size: 0.72rem;">Fecha: ${esc(conformidad.fecha)}</div>
-                  </div>`
-                : !derivacion
-                ? `<div class="alert alert-light border small text-muted mb-0">
-                    <i class="bi bi-hourglass-split me-1"></i>Bloqueado (RN-08): Requiere que el Especialista (EC) derive el Visto Bueno.
-                  </div>`
-                : `<div class="d-grid">
-                    <button type="button" class="btn btn-sm btn-success fw-semibold" ${!canDarConformidad() ? "disabled" : ""} onclick="ejecutarConformidad('${esc(req.codigo)}', '${esc(derivacion.id_evento)}')">
-                      <i class="bi bi-patch-check-fill me-1"></i>Dar Conformidad Final (RP)
-                    </button>
-                    ${!canDarConformidad() ? `<small class="text-muted mt-2"><i class="bi bi-lock me-1"></i>Acción exclusiva del Responsable del Proyecto (RP).</small>` : ""}
-                  </div>`
-            }
-          </div>
-        </div>
-      `;
-
-      container.innerHTML = step1Html + step2Html + step3Html;
-    }
-
-    document.getElementById("valReqSelector").addEventListener("change", function (e) {
-      selectedReqCode = e.target.value;
-      renderValidacionModule();
-    });
-
-    function ejecutarVistoBueno(codigoReq) {
-      if (!canDarVistoBueno()) return;
-      const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
-      state.eventos_validacion.push({
-        id_evento: newValId,
-        codigo_req: codigoReq,
-        id_evento_previo: null,
-        tipo: "Visto bueno",
-        autor: `${currentUser.nombre} (AU)`,
-        fecha: nowStr()
-      });
-      saveState();
-      renderAll();
-      notify(`Visto bueno (${newValId}) registrado por el Área Usuaria (HU-08).`, "success");
-    }
-
-    function ejecutarDerivacionVB(codigoReq, idEventoPrevio) {
-      if (!canDerivarVistoBueno()) return;
-      const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
-      state.eventos_validacion.push({
-        id_evento: newValId,
-        codigo_req: codigoReq,
-        id_evento_previo: idEventoPrevio,
-        tipo: "Derivación del visto bueno",
-        autor: `${currentUser.nombre} (EC)`,
-        fecha: nowStr()
-      });
-      saveState();
-      renderAll();
-      notify(`Visto bueno derivado al Responsable del Proyecto (${newValId}) (HU-09).`, "primary");
-    }
-
-    function ejecutarConformidad(codigoReq, idEventoPrevio) {
-      if (!canDarConformidad()) return;
-      const newValId = nextCode("VAL-", state.eventos_validacion, "id_evento");
-      state.eventos_validacion.push({
-        id_evento: newValId,
-        codigo_req: codigoReq,
-        id_evento_previo: idEventoPrevio,
-        tipo: "Conformidad",
-        autor: `${currentUser.nombre} (RP)`,
-        fecha: nowStr()
-      });
-      saveState();
-      renderAll();
-      notify(`Conformidad del requerimiento registrada (${newValId}) (HU-10).`, "success");
-    }
-
     /* ==========================================================================
        INICIALIZACIÓN GLOBAL
        ========================================================================== */
@@ -2717,7 +2432,6 @@
     window.addEventListener("DOMContentLoaded", () => {
       initSelects();
 
-      // Login y selector rápido de perfil
       document.getElementById("formLogin").addEventListener("submit", (e) => {
         e.preventDefault();
         loginWithCredentials(
@@ -2742,15 +2456,12 @@
         quickLogin(e.target.value);
       });
 
-      // Filtros de consulta HU-02
       document.getElementById("filterReqCodigo").addEventListener("input", renderRegistroModule);
       document.getElementById("filterReqEstado").addEventListener("change", renderRegistroModule);
 
-      // Filtros y selectores de Archivos HU-06
       document.getElementById("fileReqSelect").addEventListener("change", updateOptionalObsDropdownForFileUpload);
       document.getElementById("filterFilesByReq").addEventListener("change", renderArchivosModule);
 
-      // Drag & Drop de Archivos
       const dropzone = document.getElementById("fileDropzone");
       const fileInput = document.getElementById("fileUploadInput");
       dropzone.addEventListener("click", () => fileInput.click());
